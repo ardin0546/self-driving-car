@@ -1,6 +1,6 @@
-import Controls, {ControlType} from "./controls.ts";
-import {Sensor} from "./sensort.ts";
-import {Road} from "./road.ts";
+import Controls, {ControlType} from "./Controls.ts";
+import {Sensor} from "./Sensor.ts";
+import {Road} from "./Road.ts";
 import {Point} from "./types";
 import {polysIntersect} from "./helpers.ts";
 

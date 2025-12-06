@@ -1,8 +1,8 @@
 import './style.css'
-import Car from "./car.ts";
-import {Road} from "./road.ts";
+import Car from "./Car.ts";
+import {Road} from "./Road.ts";
 import {Debug} from "./debug/debug.ts";
-import {ControlType} from "./controls.ts";
+import {ControlType} from "./Controls.ts";
 import {FPSCounter} from "./debug/fpsCounter.ts";
 
 const app = document.getElementById('app');

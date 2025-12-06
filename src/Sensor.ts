@@ -1,6 +1,6 @@
-import Car from "./car.ts";
+import Car from "./Car.ts";
 import {getIntersection, lerp} from "./helpers.ts";
-import {Road} from "./road.ts";
+import {Road} from "./Road.ts";
 import {Point} from "./types";
 
 type Reading = Point & { offset: number };
@@ -8,7 +8,7 @@ type Reading = Point & { offset: number };
 export class Sensor {
     constructor(
         public car: Car,
-        public rayCount = 10,
+        public rayCount = 5,
         public rayLength = 150,
         public raySpread = Math.PI / 2,
         public rays: Point[][] = [],

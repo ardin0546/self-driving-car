@@ -1,4 +1,4 @@
-import Car from "../car.ts";
+import Car from "../Car.ts";
 import {FPSCounter} from "./fpsCounter.ts";
 
 const FPS_ID = 'fps';
