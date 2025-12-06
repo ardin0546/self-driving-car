@@ -18,16 +18,28 @@ const CANVAS_TRANSLATION_ID = 'canvas-translation';
 const SENSOR_READING_ = 'sensor-reading-';
 
 type DebugOptions = {
+    slimSize: boolean;
+    disableCarPosition?: boolean;
+    disableCanvasTranslation?: boolean;
+    disableControls?: boolean;
     disableSensorReadings?: boolean;
 }
 
 export class Debug {
-    private readonly showSensorReadings: boolean = false;
+    private readonly slimSize: boolean;
+    private readonly showCarPosition: boolean;
+    private readonly showCanvasTranslation: boolean;
+    private readonly showControls: boolean;
+    private readonly showSensorReadings: boolean;
 
     constructor(
         public readonly car: Car,
         options?: DebugOptions,
     ) {
+        this.slimSize = options?.slimSize ?? false;
+        this.showCarPosition = !(options?.disableCarPosition ?? false);
+        this.showCanvasTranslation = !(options?.disableCanvasTranslation ?? false);
+        this.showControls = !(options?.disableControls ?? false);
         this.showSensorReadings = !(options?.disableSensorReadings ?? false);
     }
 
@@ -37,7 +49,7 @@ export class Debug {
         debugElement.style.top = '10px';
         debugElement.style.left = '10px';
         debugElement.style.padding = '10px';
-        debugElement.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+        debugElement.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
         debugElement.style.fontFamily = 'monospace';
         debugElement.style.fontSize = '12px';
         debugElement.style.color = '#000';
@@ -69,19 +81,25 @@ export class Debug {
             'Car damaged:',
             CAR_DAMAGED
         )
-        this.#appendTableRow(
-            tableElement,
-            'Car position:',
-            CAR_POSITION_ID
-        )
+        if (this.showCarPosition) {
+            this.#appendTableRow(
+                tableElement,
+                'Car position:',
+                CAR_POSITION_ID
+            )
+        }
 
-        this.#appendControlsInnerTable(tableElement);
+        if (this.showControls) {
+            this.#appendControlsInnerTable(tableElement);
+        }
 
-        this.#appendTableRow(
-            tableElement,
-            'Canvas translation:',
-            CANVAS_TRANSLATION_ID
-        )
+        if (this.showCanvasTranslation) {
+            this.#appendTableRow(
+                tableElement,
+                'Canvas translation:',
+                CANVAS_TRANSLATION_ID
+            )
+        }
 
         if (this.showSensorReadings) {
             this.#appendTableRow(
@@ -110,18 +128,24 @@ export class Debug {
         this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2) + ' px/s');
         this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2) + ' rad');
         this.#updateValue(CAR_DAMAGED, this.car.isDamaged ? 'Yes' : 'No');
-        this.#updateValue(CAR_POSITION_ID, `(x: ${this.car.x.toFixed(2)}, y: ${this.car.y.toFixed(2)})`);
+        if (this.showCarPosition) {
+            this.#updateValue(CAR_POSITION_ID, `(x: ${this.car.x.toFixed(2)}, y: ${this.car.y.toFixed(2)})`);
+        }
 
-        this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward);
-        this.#updateControl(CAR_CONTROL_LEFT_ID, this.car.controls.left);
-        this.#updateControl(CAR_CONTROL_RIGHT_ID, this.car.controls.right);
-        this.#updateControl(CAR_CONTROL_REVERSE_ID, this.car.controls.reverse);
+        if (this.showControls) {
+            this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward);
+            this.#updateControl(CAR_CONTROL_LEFT_ID, this.car.controls.left);
+            this.#updateControl(CAR_CONTROL_RIGHT_ID, this.car.controls.right);
+            this.#updateControl(CAR_CONTROL_REVERSE_ID, this.car.controls.reverse);
+        }
 
-        const transform = ctx.getTransform();
-        this.#updateValue(
-            CANVAS_TRANSLATION_ID,
-            `(e: ${transform.e.toFixed(2)}, f: ${transform.f.toFixed(2)})`
-        );
+        if (this.showCanvasTranslation) {
+            const transform = ctx.getTransform();
+            this.#updateValue(
+                CANVAS_TRANSLATION_ID,
+                `(e: ${transform.e.toFixed(2)}, f: ${transform.f.toFixed(2)})`
+            );
+        }
 
         if (this.showSensorReadings) {
             const rayCount = this.car.sensor?.rayCount ?? 0;
@@ -142,11 +166,15 @@ export class Debug {
     #appendTableRow(table: HTMLTableElement, label: string, identifier: string) {
         const row = document.createElement('tr');
 
-        const labelCell = document.createElement('td');
-        labelCell.textContent = label;
-        labelCell.style.padding = '4px';
-        labelCell.style.textAlign = 'left';
-        labelCell.style.fontWeight = 'bold';
+        if (!this.slimSize) {
+            const labelCell = document.createElement('td');
+            labelCell.textContent = label;
+            labelCell.style.padding = '4px';
+            labelCell.style.textAlign = 'left';
+            labelCell.style.fontWeight = 'bold';
+
+            row.appendChild(labelCell);
+        }
 
         const valueCell = document.createElement('td');
         valueCell.id = identifier;
@@ -154,7 +182,6 @@ export class Debug {
         valueCell.style.textAlign = 'left';
         valueCell.style.padding = '4px';
 
-        row.appendChild(labelCell);
         row.appendChild(valueCell);
 
         table.appendChild(row);
@@ -215,7 +242,7 @@ export class Debug {
         const element = document.getElementById(identifier);
 
         if (element) {
-            element.style.backgroundColor = value ? 'lightgray' : 'transparent';
+            element.style.backgroundColor = value ? 'coral' : 'transparent';
         }
     }
 }

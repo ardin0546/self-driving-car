@@ -37,7 +37,11 @@ const car = new Car({
 })
 
 const debug = new Debug(car, {
-    disableSensorReadings: false,
+    slimSize: false,
+    disableCarPosition: true,
+    disableControls: false,
+    disableCanvasTranslation: true,
+    disableSensorReadings: true,
 });
 debug.createView();
 
@@ -66,6 +70,16 @@ const traffic = [
         maxSpeed: 5,
         color: "orange",
     }),
+    // new Car({
+    //     x: road.getLaneCenter(1),
+    //     y: 200,
+    //     width: 50,
+    //     height: 80,
+    //     speed: 12,
+    //     maxSpeed: 8,
+    //     color: "orange",
+    //     acceleration: 0.15
+    // }),
 ]
 
 const fpsCounter = new FPSCounter();
@@ -80,7 +94,7 @@ const animate = (time: number) => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.translate(0, -car.y + canvas.height * 0.9);
+    ctx.translate(0, -car.y + canvas.height * 0.8);
 
     road.draw(ctx);
 

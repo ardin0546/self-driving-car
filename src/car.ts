@@ -13,6 +13,7 @@ type CarOptions = {
     speed?: number,
     maxSpeed?: number,
     color?: string,
+    acceleration?: number,
 }
 
 const DAMAGED_COLOR = "tomato";
@@ -25,6 +26,7 @@ export default class Car {
     public y: number;
     public width: number;
     public height: number;
+    // https://www.w3schools.com/tags/ref_colornames.asp
     public color: string;
 
     public angle = 0;
@@ -50,6 +52,9 @@ export default class Car {
 
         this.speed = options.speed || 0;
         this.maxSpeed = options.maxSpeed || 10;
+        if (options.acceleration && options.acceleration > 0) {
+            this.acceleration = options.acceleration;
+        }
 
         // @todo probably define controls outside this class
         this.controls = new Controls(options.controlType ?? ControlType.DUMMY);
