@@ -1,6 +1,7 @@
 export enum  ControlType {
     KEYBOARD,
     DUMMY,
+    NEURAL_NETWORK,
 }
 
 export default class Controls {
@@ -13,7 +14,9 @@ export default class Controls {
         // @todo make interface... instead of param drilling
         if (controlType === ControlType.KEYBOARD) {
             this.#addKeyboardListeners();
-        } else {
+        }
+
+        if (controlType === ControlType.DUMMY) {
             this.forward = true;
         }
     }

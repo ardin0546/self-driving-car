@@ -32,7 +32,8 @@ const car = new Car({
     y: canvas.height - 100,
     width: 50,
     height: 80,
-    controlType: ControlType.KEYBOARD,
+    controlType: ControlType.NEURAL_NETWORK,
+    maxSpeed: 5,
     color: "steelblue",
 })
 
@@ -47,29 +48,29 @@ debug.createView();
 
 const traffic = [
     new Car({
-        x: road.getLaneCenter(0),
-        y: 100,
+        x: road.getLaneCenter(1),
+        y: 600,
         width: 50,
         height: 80,
-        maxSpeed: 3,
+        maxSpeed: 4,
         color: "orange",
     }),
-    new Car({
-        x: road.getLaneCenter(2),
-        y: -200,
-        width: 50,
-        height: 80,
-        maxSpeed: 2,
-        color: "orange",
-    }),
-    new Car({
-        x: road.getLaneCenter(0),
-        y: canvas.height - 200,
-        width: 50,
-        height: 80,
-        maxSpeed: 5,
-        color: "orange",
-    }),
+    // new Car({
+    //     x: road.getLaneCenter(2),
+    //     y: -200,
+    //     width: 50,
+    //     height: 80,
+    //     maxSpeed: 2,
+    //     color: "orange",
+    // }),
+    // new Car({
+    //     x: road.getLaneCenter(0),
+    //     y: canvas.height - 200,
+    //     width: 50,
+    //     height: 80,
+    //     maxSpeed: 5,
+    //     color: "orange",
+    // }),
     // new Car({
     //     x: road.getLaneCenter(1),
     //     y: 200,

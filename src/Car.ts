@@ -3,6 +3,7 @@ import {Sensor} from "./Sensor.ts";
 import {Road} from "./Road.ts";
 import {Point} from "./types";
 import {polysIntersect} from "./helpers.ts";
+import {Network} from "./neural-network/Network.ts";
 
 type CarOptions = {
     x: number,
@@ -40,6 +41,7 @@ export default class Car {
 
     public readonly controls: Controls;
     public readonly sensor?: Sensor = undefined;
+    public readonly brain?: Network = undefined;
 
     // @todo make 2 cars (AI and player)
     constructor(options: CarOptions) {
@@ -59,8 +61,9 @@ export default class Car {
         // @todo probably define controls outside this class
         this.controls = new Controls(options.controlType ?? ControlType.DUMMY);
         // @todo probably define sensors outside this class
-        if (options.controlType === ControlType.KEYBOARD) {
+        if (options.controlType === ControlType.NEURAL_NETWORK) {
             this.sensor = new Sensor(this);
+            this.brain = new Network([this.sensor.rayCount, 6, 4]);
         }
     }
 
@@ -72,8 +75,21 @@ export default class Car {
         this.#move();
         this.polygon = this.#createPolygon();
         this.isDamaged = this.#assessDamage(road, traffic);
+        // @todo better way... just send the classes
         if (this.sensor) {
             this.sensor.update(road, traffic ?? []);
+
+            if (this.brain) {
+                const offsets = this.sensor.readings.map(
+                    s => s == null ? 0 : 1 - s.offset
+                );
+                const outputs = Network.feedForward(offsets, this.brain);
+
+                this.controls.forward = Boolean(outputs[0]);
+                this.controls.left = Boolean(outputs[1])
+                this.controls.right = Boolean(outputs[2])
+                this.controls.reverse = Boolean(outputs[3])
+            }
         }
     }
 
