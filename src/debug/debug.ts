@@ -1,4 +1,7 @@
-import Car from "./car.ts";
+import Car from "../car.ts";
+import {FPSCounter} from "./fpsCounter.ts";
+
+const FPS_ID = 'fps';
 
 const CAR_SPEED_ID = 'car-speed';
 const CAR_ANGLE_ID = 'car-angle';
@@ -14,10 +17,18 @@ const CANVAS_TRANSLATION_ID = 'canvas-translation';
 
 const SENSOR_READING_ = 'sensor-reading-';
 
+type DebugOptions = {
+    disableSensorReadings?: boolean;
+}
+
 export class Debug {
+    private readonly showSensorReadings: boolean = false;
+
     constructor(
         public readonly car: Car,
+        options?: DebugOptions,
     ) {
+        this.showSensorReadings = !(options?.disableSensorReadings ?? false);
     }
 
     createView() {
@@ -36,6 +47,12 @@ export class Debug {
 
         const tableElement = document.createElement('table');
         tableElement.style.width = '100%';
+
+        this.#appendTableRow(
+            tableElement,
+            'FPS:',
+            FPS_ID
+        )
 
         this.#appendTableRow(
             tableElement,
@@ -66,26 +83,30 @@ export class Debug {
             CANVAS_TRANSLATION_ID
         )
 
-        this.#appendTableRow(
-            tableElement,
-            'Sensor readings:',
-            ''
-        )
-
-        const rayCount = this.car.sensor?.rayCount ?? 0;
-        for (let i = 0; i < rayCount; i++) {
+        if (this.showSensorReadings) {
             this.#appendTableRow(
                 tableElement,
-                `  Ray ${i}:`,
-                SENSOR_READING_ + i
+                'Sensor readings:',
+                ''
             )
+
+            const rayCount = this.car.sensor?.rayCount ?? 0;
+            for (let i = 0; i < rayCount; i++) {
+                this.#appendTableRow(
+                    tableElement,
+                    `  Ray ${i}:`,
+                    SENSOR_READING_ + i
+                )
+            }
         }
 
         debugElement.appendChild(tableElement);
         return debugElement;
     }
 
-    update(ctx: CanvasRenderingContext2D) {
+    update(ctx: CanvasRenderingContext2D, fpsCounter: FPSCounter) {
+        this.#updateValue(FPS_ID, fpsCounter.getFps());
+
         this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2) + ' px/s');
         this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2) + ' rad');
         this.#updateValue(CAR_DAMAGED, this.car.isDamaged ? 'Yes' : 'No');
@@ -102,17 +123,19 @@ export class Debug {
             `(e: ${transform.e.toFixed(2)}, f: ${transform.f.toFixed(2)})`
         );
 
-        const rayCount = this.car.sensor?.rayCount ?? 0;
-        for (let i = 0; i < rayCount; i++) {
-            const reading = this.car.sensor?.readings[i];
-            let readingText = "No obstacle";
-            if (reading) {
-                readingText = `(x: ${reading.x.toFixed(2)}, y: ${reading.y.toFixed(2)})`;
+        if (this.showSensorReadings) {
+            const rayCount = this.car.sensor?.rayCount ?? 0;
+            for (let i = 0; i < rayCount; i++) {
+                const reading = this.car.sensor?.readings[i];
+                let readingText = "No obstacle";
+                if (reading) {
+                    readingText = `(x: ${reading.x.toFixed(2)}, y: ${reading.y.toFixed(2)})`;
+                }
+                this.#updateValue(
+                    SENSOR_READING_ + i,
+                    readingText
+                );
             }
-            this.#updateValue(
-                SENSOR_READING_ + i,
-                readingText
-            );
         }
     }
 

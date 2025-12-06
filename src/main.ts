@@ -1,8 +1,9 @@
 import './style.css'
 import Car from "./car.ts";
 import {Road} from "./road.ts";
-import {Debug} from "./debug.ts";
+import {Debug} from "./debug/debug.ts";
 import {ControlType} from "./controls.ts";
+import {FPSCounter} from "./debug/fpsCounter.ts";
 
 const app = document.getElementById('app');
 if (!app) {
@@ -35,7 +36,9 @@ const car = new Car({
     color: "steelblue",
 })
 
-const debug = new Debug(car);
+const debug = new Debug(car, {
+    disableSensorReadings: false,
+});
 debug.createView();
 
 const traffic = [
@@ -57,7 +60,11 @@ const traffic = [
     })
 ]
 
-const animate = () => {
+const fpsCounter = new FPSCounter();
+
+const animate = (time: number) => {
+    fpsCounter.update(time);
+
     for(const trafficCar of traffic) {
         trafficCar.update(road);
     }
@@ -74,10 +81,10 @@ const animate = () => {
     }
     car.draw(ctx);
 
-    debug.update(ctx)
+    debug.update(ctx, fpsCounter)
 
     ctx.restore();
     requestAnimationFrame(animate);
 }
 
-animate();
+requestAnimationFrame(animate);
