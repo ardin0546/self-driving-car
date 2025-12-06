@@ -57,7 +57,15 @@ const traffic = [
         height: 80,
         maxSpeed: 2,
         color: "orange",
-    })
+    }),
+    new Car({
+        x: road.getLaneCenter(0),
+        y: canvas.height - 200,
+        width: 50,
+        height: 80,
+        maxSpeed: 5,
+        color: "orange",
+    }),
 ]
 
 const fpsCounter = new FPSCounter();
@@ -66,7 +74,7 @@ const animate = (time: number) => {
     fpsCounter.update(time);
 
     for(const trafficCar of traffic) {
-        trafficCar.update(road);
+        trafficCar.update(road, traffic);
     }
     car.update(road, traffic);
 

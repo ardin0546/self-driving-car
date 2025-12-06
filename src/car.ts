@@ -15,7 +15,12 @@ type CarOptions = {
     color?: string,
 }
 
+const DAMAGED_COLOR = "tomato";
+
 export default class Car {
+    private static nextId = 1;
+
+    public id: number;
     public x: number;
     public y: number;
     public width: number;
@@ -36,6 +41,7 @@ export default class Car {
 
     // @todo make 2 cars (AI and player)
     constructor(options: CarOptions) {
+        this.id = Car.nextId++;
         this.x = options.x;
         this.y = options.y;
         this.width = options.width;
@@ -69,7 +75,7 @@ export default class Car {
     draw(ctx: CanvasRenderingContext2D) {
         ctx.beginPath();
 
-        ctx.fillStyle = this.isDamaged ? "red" : this.color;
+        ctx.fillStyle = this.isDamaged ? DAMAGED_COLOR : this.color;
 
         if (this.polygon.length > 0) {
             ctx.moveTo(this.polygon[0].x, this.polygon[0].y);
@@ -129,6 +135,9 @@ export default class Car {
         }
 
         for (const trafficCar of traffic || []) {
+            if (trafficCar.id === this.id) {
+                continue;
+            }
             if (polysIntersect(this.polygon, trafficCar.polygon)) {
                 trafficCar.isDamaged = true;
                 return true;
