@@ -18,7 +18,7 @@ export class Sensor {
 
     update(road: Road, traffic?: Car[]) {
         this.#castRays();
-        this.#setReadings(road);
+        this.#setReadings(road, traffic);
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -68,16 +68,16 @@ export class Sensor {
         }
     }
 
-    #setReadings(road: Road) {
+    #setReadings(road: Road, traffic?: Car[]) {
         this.readings = [];
         for (const ray of this.rays) {
-            const reading = this.#findReading(ray, road);
+            const reading = this.#findReading(ray, road, traffic);
 
             this.readings.push(reading);
         }
     }
 
-    #findReading(ray: Point[], road: Road) {
+    #findReading(ray: Point[], road: Road, traffic?: Car[]): (Reading | null) {
         let touches = [];
 
         for (const border of road.borders) {
@@ -89,6 +89,20 @@ export class Sensor {
             );
             if (touch) {
                 touches.push(touch);
+            }
+        }
+
+        for (const trafficCar of traffic ?? []) {
+            for (let i = 0; i < trafficCar.polygon.length; i++) {
+                const value = getIntersection(
+                    ray[0],
+                    ray[1],
+                    trafficCar.polygon[i],
+                    trafficCar.polygon[(i + 1) % trafficCar.polygon.length],
+                );
+                if (value) {
+                    touches.push(value);
+                }
             }
         }
 
