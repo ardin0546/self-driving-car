@@ -2,6 +2,7 @@ import Car from "./car.ts";
 
 const CAR_SPEED_ID = 'car-speed';
 const CAR_ANGLE_ID = 'car-angle';
+const CAR_DAMAGED = 'car-damaged';
 const CAR_POSITION_ID = 'car-position';
 
 const CAR_CONTROL_TOP_ID = 'car-control-top';
@@ -48,6 +49,11 @@ export class Debug {
         )
         this.#appendTableRow(
             tableElement,
+            'Car damaged:',
+            CAR_DAMAGED
+        )
+        this.#appendTableRow(
+            tableElement,
             'Car position:',
             CAR_POSITION_ID
         )
@@ -81,6 +87,7 @@ export class Debug {
     update(ctx: CanvasRenderingContext2D) {
         this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2) + ' px/s');
         this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2) + ' rad');
+        this.#updateValue(CAR_DAMAGED, this.car.isDamaged ? 'Yes' : 'No');
         this.#updateValue(CAR_POSITION_ID, `(x: ${this.car.x.toFixed(2)}, y: ${this.car.y.toFixed(2)})`);
 
         this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward);
