@@ -12,6 +12,7 @@ type CarOptions = {
     controlType?: ControlType,
     speed?: number,
     maxSpeed?: number,
+    color?: string,
 }
 
 export default class Car {
@@ -19,6 +20,7 @@ export default class Car {
     public y: number;
     public width: number;
     public height: number;
+    public color: string;
 
     public angle = 0;
     public polygon: Point[] = [];
@@ -38,6 +40,7 @@ export default class Car {
         this.y = options.y;
         this.width = options.width;
         this.height = options.height;
+        this.color = options.color ?? "blue";
 
         this.speed = options.speed || 0;
         this.maxSpeed = options.maxSpeed || 10;
@@ -66,7 +69,7 @@ export default class Car {
     draw(ctx: CanvasRenderingContext2D) {
         ctx.beginPath();
 
-        ctx.fillStyle = this.isDamaged ? "red" : "blue";
+        ctx.fillStyle = this.isDamaged ? "red" : this.color;
 
         if (this.polygon.length > 0) {
             ctx.moveTo(this.polygon[0].x, this.polygon[0].y);

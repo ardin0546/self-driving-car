@@ -32,6 +32,7 @@ const car = new Car({
     width: 50,
     height: 80,
     controlType: ControlType.KEYBOARD,
+    color: "steelblue",
 })
 
 const debug = new Debug(car);
@@ -44,6 +45,7 @@ const traffic = [
         width: 50,
         height: 80,
         maxSpeed: 3,
+        color: "orange",
     }),
     new Car({
         x: road.getLaneCenter(2),
@@ -51,6 +53,7 @@ const traffic = [
         width: 50,
         height: 80,
         maxSpeed: 2,
+        color: "orange",
     })
 ]
 
