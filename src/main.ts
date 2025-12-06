@@ -2,6 +2,7 @@ import './style.css'
 import Car from "./car.ts";
 import {Road} from "./road.ts";
 import {Debug} from "./debug.ts";
+import {ControlType} from "./controls.ts";
 
 const app = document.getElementById('app');
 if (!app) {
@@ -25,24 +26,49 @@ const road = new Road(
     canvas.width * 0.9,
     laneCount
 )
-const car = new Car(
-    road.getLaneCenter(1),
-    canvas.height - 100,
-    50,
-    80,
-)
+const car = new Car({
+    x: road.getLaneCenter(1),
+    y: canvas.height - 100,
+    width: 50,
+    height: 80,
+    controlType: ControlType.KEYBOARD,
+})
 
 const debug = new Debug(car);
 debug.createView();
 
+const traffic = [
+    new Car({
+        x: road.getLaneCenter(0),
+        y: 100,
+        width: 50,
+        height: 80,
+        maxSpeed: 3,
+    }),
+    new Car({
+        x: road.getLaneCenter(2),
+        y: -200,
+        width: 50,
+        height: 80,
+        maxSpeed: 2,
+    })
+]
+
 const animate = () => {
-    car.update(road);
+    for(const trafficCar of traffic) {
+        trafficCar.update(road);
+    }
+    car.update(road, traffic);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(0, -car.y + canvas.height * 0.9);
 
     road.draw(ctx);
+
+    for(const trafficCar of traffic) {
+        trafficCar.draw(ctx);
+    }
     car.draw(ctx);
 
     debug.update(ctx)

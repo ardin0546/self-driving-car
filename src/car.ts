@@ -1,47 +1,68 @@
-import Controls from "./controls.ts";
+import Controls, {ControlType} from "./controls.ts";
 import {Sensor} from "./sensort.ts";
 import {Road} from "./road.ts";
 import {Point} from "./types";
 import {polysIntersect} from "./helpers.ts";
 
+type CarOptions = {
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    controlType?: ControlType,
+    speed?: number,
+    maxSpeed?: number,
+}
+
 export default class Car {
-    constructor(
-        public x: number,
-        public y: number,
-        public width: number,
-        public height: number,
-        //
-        public speed: number = 0,
-        public maxSpeed: number = 10,
-        public acceleration: number = 0.2,
-        public friction: number = 0.05,
-        public angle: number = 0,
-        //
-        public polygon: Point[] = [],
-        public isDamaged = false,
-        //
-        public readonly sensor: Sensor = new Sensor(this),
-        public readonly controls: Controls = new Controls(),
-    ) {
+    public x: number;
+    public y: number;
+    public width: number;
+    public height: number;
+
+    public angle = 0;
+    public polygon: Point[] = [];
+    public isDamaged = false;
+
+    public speed: number;
+    public maxSpeed: number;
+    public acceleration: number = 0.2;
+    public friction: number = 0.05;
+
+    public readonly controls: Controls;
+    public readonly sensor: Sensor;
+
+    // @todo make 2 cars (AI and player)
+    constructor(options: CarOptions) {
+        this.x = options.x;
+        this.y = options.y;
+        this.width = options.width;
+        this.height = options.height;
+
+        this.speed = options.speed || 0;
+        this.maxSpeed = options.maxSpeed || 10;
+
+        // @todo probably define controls outside this class
+        this.controls = new Controls(options.controlType ?? ControlType.DUMMY);
+        // @todo probably define sensors outside this class
+        this.sensor = new Sensor(this);
     }
 
-    update(road: Road) {
+    update(road: Road, traffic?: Car[]) {
         if (this.isDamaged) {
             return
         }
 
         this.#move();
         this.polygon = this.#createPolygon();
-        this.isDamaged = this.#assessDamage(road);
-        this.sensor.update(road);
+        this.isDamaged = this.#assessDamage(road, traffic);
+        this.sensor.update(road, traffic ?? []);
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.beginPath();
 
-        if (this.isDamaged) {
-            ctx.fillStyle = "red";
-        }
+        ctx.fillStyle = this.isDamaged ? "red" : "blue";
 
         if (this.polygon.length > 0) {
             ctx.moveTo(this.polygon[0].x, this.polygon[0].y);
@@ -91,12 +112,20 @@ export default class Car {
         return points;
     }
 
-    #assessDamage(road: Road) {
-        for (let i = 0; i < road.borders.length; i++) {
-            if (polysIntersect(this.polygon, road.borders[i])) {
+    #assessDamage(road: Road, traffic?: Car[]) {
+        for (const border of road.borders) {
+            if (polysIntersect(this.polygon, border)) {
                 return true;
             }
         }
+
+        for (const trafficCar of traffic || []) {
+            if (polysIntersect(this.polygon, trafficCar.polygon)) {
+                trafficCar.isDamaged = true;
+                return true;
+            }
+        }
+
         return false;
     }
 

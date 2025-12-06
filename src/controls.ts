@@ -1,11 +1,21 @@
+export enum  ControlType {
+    KEYBOARD,
+    DUMMY,
+}
+
 export default class Controls {
-    constructor(
-        public forward = false,
-        public left = false,
-        public right = false,
-        public reverse = false,
-    ) {
-        this.#addKeyboardListeners();
+    public forward = false;
+    public left = false;
+    public right = false;
+    public reverse = false;
+
+    constructor(controlType: ControlType) {
+        // @todo make interface... instead of param drilling
+        if (controlType === ControlType.KEYBOARD) {
+            this.#addKeyboardListeners();
+        } else {
+            this.forward = true;
+        }
     }
 
     #addKeyboardListeners() {

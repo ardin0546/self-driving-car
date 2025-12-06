@@ -16,7 +16,7 @@ export class Sensor {
     ) {
     }
 
-    update(road: Road) {
+    update(road: Road, traffic?: Car[]) {
         this.#castRays();
         this.#setReadings(road);
     }
