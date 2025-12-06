@@ -72,7 +72,8 @@ export class Debug {
             ''
         )
 
-        for (let i = 0; i < this.car.sensor.rayCount; i++) {
+        const rayCount = this.car.sensor?.rayCount ?? 0;
+        for (let i = 0; i < rayCount; i++) {
             this.#appendTableRow(
                 tableElement,
                 `  Ray ${i}:`,
@@ -101,8 +102,9 @@ export class Debug {
             `(e: ${transform.e.toFixed(2)}, f: ${transform.f.toFixed(2)})`
         );
 
-        for (let i = 0; i < this.car.sensor.rayCount; i++) {
-            const reading = this.car.sensor.readings[i];
+        const rayCount = this.car.sensor?.rayCount ?? 0;
+        for (let i = 0; i < rayCount; i++) {
+            const reading = this.car.sensor?.readings[i];
             let readingText = "No obstacle";
             if (reading) {
                 readingText = `(x: ${reading.x.toFixed(2)}, y: ${reading.y.toFixed(2)})`;

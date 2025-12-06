@@ -30,7 +30,7 @@ export default class Car {
     public friction: number = 0.05;
 
     public readonly controls: Controls;
-    public readonly sensor: Sensor;
+    public readonly sensor?: Sensor = undefined;
 
     // @todo make 2 cars (AI and player)
     constructor(options: CarOptions) {
@@ -45,7 +45,9 @@ export default class Car {
         // @todo probably define controls outside this class
         this.controls = new Controls(options.controlType ?? ControlType.DUMMY);
         // @todo probably define sensors outside this class
-        this.sensor = new Sensor(this);
+        if (options.controlType === ControlType.KEYBOARD) {
+            this.sensor = new Sensor(this);
+        }
     }
 
     update(road: Road, traffic?: Car[]) {
@@ -56,7 +58,9 @@ export default class Car {
         this.#move();
         this.polygon = this.#createPolygon();
         this.isDamaged = this.#assessDamage(road, traffic);
-        this.sensor.update(road, traffic ?? []);
+        if (this.sensor) {
+            this.sensor.update(road, traffic ?? []);
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -83,7 +87,9 @@ export default class Car {
             ctx.stroke();
         }
 
-        this.sensor.draw(ctx);
+        if (this.sensor) {
+            this.sensor.draw(ctx);
+        }
     }
 
     #createPolygon() {
