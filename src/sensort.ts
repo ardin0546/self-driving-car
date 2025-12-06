@@ -1,5 +1,9 @@
 import Car from "./car.ts";
-import {lerp} from "./helpers.ts";
+import {getIntersection, lerp} from "./helpers.ts";
+import {Road} from "./road.ts";
+import {Point} from "./types";
+
+type Reading = Point & { offset: number };
 
 export class Sensor {
     constructor(
@@ -7,22 +11,40 @@ export class Sensor {
         public rayCount = 10,
         public rayLength = 150,
         public raySpread = Math.PI / 2,
-        public rays: {x: number, y: number}[][] = [],
+        public rays: Point[][] = [],
+        public readings: (Reading | null)[] = [],
     ) {
     }
 
-    update() {
-       this.#castRays();
+    update(road: Road) {
+        this.#castRays();
+        this.#setReadings(road);
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        for (const ray of this.rays) {
+        for(const ray of this.rays) {
+            let end: Point | Reading = ray[1];
+
+            const reading = this.readings[this.rays.indexOf(ray)];
+            if (reading) {
+                end = reading;
+            }
+
             ctx.beginPath();
             ctx.lineWidth = 2;
             ctx.strokeStyle = 'yellow';
             ctx.moveTo(ray[0].x, ray[0].y);
             ctx.lineTo(ray[1].x, ray[1].y);
             ctx.stroke();
+
+            if (reading) {
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'red';
+                ctx.moveTo(ray[1].x, ray[1].y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+            }
         }
     }
 
@@ -43,6 +65,41 @@ export class Sensor {
             };
 
             this.rays.push([start, end]);
+        }
+    }
+
+    #setReadings(road: Road) {
+        this.readings = [];
+        for (const ray of this.rays) {
+            const reading = this.#findReading(ray, road);
+
+            this.readings.push(reading);
+        }
+    }
+
+    #findReading(ray: Point[], road: Road) {
+        let touches = [];
+
+        for (const border of road.borders) {
+            const touch = getIntersection(
+                ray[0],
+                ray[1],
+                border[0],
+                border[1]
+            );
+            if (touch) {
+                touches.push(touch);
+            }
+        }
+
+        if (touches.length == 0) {
+            return null;
+        } else {
+            const minOffset = Math.min(
+                ...touches.map(e => e.offset),
+            );
+
+            return touches.find(e => e.offset == minOffset) ?? null;
         }
     }
 }

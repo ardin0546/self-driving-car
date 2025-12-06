@@ -35,7 +35,7 @@ road.draw(ctx);
 car.draw(ctx)
 
 const animate = () => {
-    car.update();
+    car.update(road);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();

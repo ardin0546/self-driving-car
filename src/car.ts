@@ -1,5 +1,6 @@
 import Controls from "./controls.ts";
 import {Sensor} from "./sensort.ts";
+import {Road} from "./road.ts";
 
 export default class Car {
     constructor(
@@ -20,9 +21,9 @@ export default class Car {
     ) {
     }
 
-    update() {
+    update(road: Road) {
        this.#move();
-       this.sensor.update();
+       this.sensor.update(road);
     }
 
     draw(ctx: CanvasRenderingContext2D) {
