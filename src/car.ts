@@ -66,13 +66,6 @@ export default class Car {
             this.speed -= this.acceleration;
         }
 
-        if (this.speed > this.maxSpeed) {
-            this.speed = this.maxSpeed;
-        }
-        if (this.speed < -this.maxSpeed) {
-            this.speed = -this.maxSpeed;
-        }
-
         if (this.speed > 0) {
             this.speed -= this.friction;
         }
@@ -81,6 +74,13 @@ export default class Car {
         }
         if (Math.abs(this.speed) < this.friction) {
             this.speed = 0;
+        }
+
+        if (this.speed > this.maxSpeed) {
+            this.speed = this.maxSpeed;
+        }
+        if (this.speed < -this.maxSpeed) {
+            this.speed = -this.maxSpeed;
         }
 
         if (this.speed !== 0) {

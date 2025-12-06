@@ -1,6 +1,7 @@
 import './style.css'
 import Car from "./car.ts";
 import {Road} from "./road.ts";
+import {Debug} from "./debug.ts";
 
 const app = document.getElementById('app');
 if (!app) {
@@ -31,19 +32,20 @@ const car = new Car(
     80,
 )
 
-road.draw(ctx);
-car.draw(ctx)
+const debug = new Debug(car);
+debug.createView();
 
 const animate = () => {
     car.update(road);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.translate(0, -car.y + canvas.height * 0.7);
-    // ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(0, -car.y + canvas.height * 0.9);
 
     road.draw(ctx);
     car.draw(ctx);
+
+    debug.update(ctx)
 
     ctx.restore();
     requestAnimationFrame(animate);
