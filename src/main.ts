@@ -62,7 +62,8 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
     return batches;
 }
 
-const carBatches: CarBatch[] = generateCarBatch(1000);
+// @todo change this number to adjust the number of cars being simulated
+const carBatches: CarBatch[] = generateCarBatch(6000);
 
 // const neuralNetworkControls = new NeuralNetworkControls();
 // const car = new Car({
@@ -93,7 +94,9 @@ const debug = new Debug({
 });
 debug.createView();
 
-const trafficManager = new TrafficManager(road)
+const trafficManager = new TrafficManager(road, {
+    disableAutomatedTraffic: true,
+})
 const fpsCounter = new FPSCounter();
 
 let lastTime = 0;
@@ -104,8 +107,10 @@ const animate = (time: number) => {
     lastTime = time;
     fpsCounter.update(time);
 
-
     for (const {car, sensor, network, controls} of carBatches) {
+        if (car.isDamaged) {
+            continue;
+        }
         car.update(road, trafficManager.getTraffic());
         sensor.update(road, trafficManager.getTraffic());
         controls.update(sensor, network);
