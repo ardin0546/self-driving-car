@@ -68,6 +68,9 @@ export default class Car {
         this.#move();
         this.polygon = this.#createPolygon();
         this.isDamaged = this.#assessDamage(road, traffic);
+        if (this.isDamaged) {
+            this.speed = 0;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -134,6 +137,7 @@ export default class Car {
             }
             if (polysIntersect(this.polygon, trafficCar.polygon)) {
                 trafficCar.isDamaged = true;
+                trafficCar.speed = 0;
                 return true;
             }
         }

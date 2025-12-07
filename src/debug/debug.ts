@@ -34,10 +34,7 @@ export class Debug {
     private readonly showControls: boolean;
     private readonly showSensorReadings: boolean;
 
-    constructor(
-        public readonly car: Car,
-        options?: DebugOptions,
-    ) {
+    constructor(options?: DebugOptions) {
         this.slimSize = options?.slimSize ?? false;
         this.showCarPosition = !(options?.disableCarPosition ?? false);
         this.showCanvasTranslation = !(options?.disableCanvasTranslation ?? false);
@@ -108,22 +105,22 @@ export class Debug {
             )
         }
 
-        if (this.showSensorReadings) {
-            this.#appendTableRow(
-                tableElement,
-                'Sensor readings:',
-                ''
-            )
-
-            const rayCount = this.car.sensor?.rayCount ?? 0;
-            for (let i = 0; i < rayCount; i++) {
-                this.#appendTableRow(
-                    tableElement,
-                    `  Ray ${i}:`,
-                    SENSOR_READING_ + i
-                )
-            }
-        }
+        // if (this.showSensorReadings) {
+        //     this.#appendTableRow(
+        //         tableElement,
+        //         'Sensor readings:',
+        //         ''
+        //     )
+        //
+        //     const rayCount = this.car.sensor?.rayCount ?? 0;
+        //     for (let i = 0; i < rayCount; i++) {
+        //         this.#appendTableRow(
+        //             tableElement,
+        //             `  Ray ${i}:`,
+        //             SENSOR_READING_ + i
+        //         )
+        //     }
+        // }
 
         debugElement.appendChild(tableElement);
         return debugElement;
@@ -131,24 +128,25 @@ export class Debug {
 
     update(
         ctx: CanvasRenderingContext2D,
+        car: Car,
         fpsCounter: FPSCounter,
         distanceTravaled: number
     ) {
         this.#updateValue(FPS_ID, fpsCounter.getFps());
 
         this.#updateValue(CAR_DISTANCE, String(Math.round(distanceTravaled)));
-        this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2));
-        this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2));
-        this.#updateValue(CAR_DAMAGED, this.car.isDamaged ? 'Yes' : 'No');
+        this.#updateValue(CAR_SPEED_ID, car.speed.toFixed(2));
+        this.#updateValue(CAR_ANGLE_ID, car.angle.toFixed(2));
+        this.#updateValue(CAR_DAMAGED, car.isDamaged ? 'Yes' : 'No');
         if (this.showCarPosition) {
-            this.#updateValue(CAR_POSITION_ID, `(x: ${this.car.x.toFixed(2)}, y: ${this.car.y.toFixed(2)})`);
+            this.#updateValue(CAR_POSITION_ID, `(x: ${car.x.toFixed(2)}, y: ${car.y.toFixed(2)})`);
         }
 
         if (this.showControls) {
-            this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward());
-            this.#updateControl(CAR_CONTROL_LEFT_ID, this.car.controls.left());
-            this.#updateControl(CAR_CONTROL_RIGHT_ID, this.car.controls.right());
-            this.#updateControl(CAR_CONTROL_REVERSE_ID, this.car.controls.reverse());
+            this.#updateControl(CAR_CONTROL_TOP_ID, car.controls.forward());
+            this.#updateControl(CAR_CONTROL_LEFT_ID, car.controls.left());
+            this.#updateControl(CAR_CONTROL_RIGHT_ID, car.controls.right());
+            this.#updateControl(CAR_CONTROL_REVERSE_ID, car.controls.reverse());
         }
 
         if (this.showCanvasTranslation) {
@@ -160,9 +158,9 @@ export class Debug {
         }
 
         if (this.showSensorReadings) {
-            const rayCount = this.car.sensor?.rayCount ?? 0;
+            const rayCount = car.sensor?.rayCount ?? 0;
             for (let i = 0; i < rayCount; i++) {
-                const reading = this.car.sensor?.readings[i];
+                const reading = car.sensor?.readings[i];
                 let readingText = "No obstacle";
                 if (reading) {
                     readingText = `(x: ${reading.x.toFixed(2)}, y: ${reading.y.toFixed(2)})`;

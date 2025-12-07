@@ -5,13 +5,11 @@ import Level from "./Level.ts";
 export default class Visualizer {
     public readonly ctx: CanvasRenderingContext2D;
 
-    constructor(
-        public readonly network: Network
-    ) {
+    constructor() {
         this.ctx = Visualizer.#createCanvas();
     }
 
-    drawNetwork(time: number) {
+    drawNetwork(time: number, network: Network) {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 
         this.ctx.lineDashOffset = -time / 50;
@@ -22,24 +20,24 @@ export default class Visualizer {
         const width = this.ctx.canvas.width - margin * 2;
         const height = this.ctx.canvas.height - margin * 2;
 
-        const levelHeight = height / this.network.levels.length;
+        const levelHeight = height / network.levels.length;
 
 
-        for (let i = this.network.levels.length - 1; i >= 0; i--) {
+        for (let i = network.levels.length - 1; i >= 0; i--) {
             const levelTop = top +
                 lerp(
                     height - levelHeight,
                     0,
-                    this.network.levels.length == 1
+                    network.levels.length == 1
                         ? 0.5
-                        : i / (this.network.levels.length - 1)
+                        : i / (network.levels.length - 1)
                 );
 
             this.ctx.setLineDash([7, 3]);
-            this.drawLevel(this.network.levels[i],
+            this.drawLevel(network.levels[i],
                 left, levelTop,
                 width, levelHeight,
-                i == this.network.levels.length - 1
+                i == network.levels.length - 1
                     ? ['↑', '←', '→', '↓']
                     : []
             );
@@ -135,11 +133,9 @@ export default class Visualizer {
 
     static #createCanvas(): CanvasRenderingContext2D {
         const canvas = document.createElement("canvas");
-        canvas.width = 700;
-        console.log('window.innerHeight', window.innerHeight);
+        canvas.width = 600;
         canvas.height = window.innerHeight;
         canvas.style.backgroundColor = "dimgray";
-        // canvas.style.backgroundColor = "black";
         canvas.style.marginLeft = "3rem";
 
         const ctx = canvas.getContext("2d");

@@ -12,6 +12,13 @@ import {Network} from "./neural-network/Network.ts";
 import Visualizer from "./neural-network/Visualizer.ts";
 import {getAppElement} from "./helpers.ts";
 
+type CarBatch = {
+    car: Car,
+    controls: NeuralNetworkControls,
+    sensor: Sensor,
+    network: Network,
+}
+
 const canvas = document.createElement('canvas');
 canvas.width = 300;
 canvas.height = window.innerHeight;
@@ -29,27 +36,55 @@ const road = new Road(
     3
 )
 
-const neuralNetworkControls = new NeuralNetworkControls();
-const car = new Car({
-    x: road.getLaneCenter(1),
-    y: canvas.height - 100,
-    width: 50,
-    height: 80,
-    controls: neuralNetworkControls,
-    // controls: new KeyboardControl(),
-    maxSpeed: 5,
-    color: "steelblue",
-})
-const carSensor = new Sensor(car, 10, 150, Math.PI / 1.5);
-const neuralNetwork = new Network([
-    carSensor.rayCount,
-    6,
-    4,
-]);
+const generateCarBatch = (batchSize: number): CarBatch[] => {
+    const batches: CarBatch[] = [];
+    for (let i = 0; i < batchSize; i++) {
+        const controls = new NeuralNetworkControls();
 
-const networkVisualizer = new Visualizer(neuralNetwork);
+        const car = new Car({
+            x: road.getLaneCenter(1),
+            y: canvas.height - 100,
+            width: 50,
+            height: 80,
+            maxSpeed: 6,
+            controls: controls,
+            color: "steelblue",
+        });
+        const sensor = new Sensor(car, 10, 150, Math.PI);
+        const network = new Network([
+            sensor.rayCount,
+            6,
+            4,
+        ]);
+        batches.push({car, controls: controls, sensor, network});
+    }
 
-const debug = new Debug(car, {
+    return batches;
+}
+
+const carBatches: CarBatch[] = generateCarBatch(1000);
+
+// const neuralNetworkControls = new NeuralNetworkControls();
+// const car = new Car({
+//     x: road.getLaneCenter(1),
+//     y: canvas.height - 100,
+//     width: 50,
+//     height: 80,
+//     controls: neuralNetworkControls,
+//     // controls: new KeyboardControl(),
+//     maxSpeed: 5,
+//     color: "steelblue",
+// })
+// const carSensor = new Sensor(car, 10, 150, Math.PI / 1.5);
+// const neuralNetwork = new Network([
+//     carSensor.rayCount,
+//     6,
+//     4,
+// ]);
+
+const networkVisualizer = new Visualizer();
+
+const debug = new Debug({
     slimSize: false,
     disableCarPosition: true,
     disableControls: false,
@@ -71,32 +106,24 @@ const traffic = [
         maxSpeed: 4,
         color: "orange",
     }),
-    // new Car({
-    //     x: road.getLaneCenter(2),
-    //     y: -200,
-    //     width: 50,
-    //     height: 80,
-    //     maxSpeed: 2,
-    //     color: "orange",
-    // }),
-    // new Car({
-    //     x: road.getLaneCenter(0),
-    //     y: canvas.height - 200,
-    //     width: 50,
-    //     height: 80,
-    //     maxSpeed: 5,
-    //     color: "orange",
-    // }),
-    // new Car({
-    //     x: road.getLaneCenter(1),
-    //     y: 200,
-    //     width: 50,
-    //     height: 80,
-    //     speed: 12,
-    //     maxSpeed: 8,
-    //     color: "orange",
-    //     acceleration: 0.15
-    // }),
+    new Car({
+        x: road.getLaneCenter(2),
+        y: 200,
+        width: 50,
+        height: 80,
+        controls: new ComputerControls(),
+        maxSpeed: 4,
+        color: "orange",
+    }),
+    new Car({
+        x: road.getLaneCenter(0),
+        y: 0,
+        width: 50,
+        height: 80,
+        controls: new ComputerControls(),
+        maxSpeed: 4,
+        color: "orange",
+    }),
 ]
 
 const fpsCounter = new FPSCounter();
@@ -112,28 +139,41 @@ const animate = (time: number) => {
     for (const trafficCar of traffic) {
         trafficCar.update(road, traffic);
     }
-    car.update(road, traffic);
-    carSensor.update(road, traffic);
-    neuralNetworkControls.update(carSensor, neuralNetwork);
+    for (const {car, sensor, network, controls} of carBatches) {
+        car.update(road, traffic);
+        sensor.update(road, traffic);
+        controls.update(sensor, network);
+    }
+
+    const minCarY = Math.min(...carBatches.map(carBatch => carBatch.car.y));
+    const bestCar = carBatches.find(carBatch =>carBatch.car.y === minCarY);
+    if (!bestCar) {
+        throw new Error('No best car found');
+    }
 
     // Accumulate distance based on the car's forward speed
-    distanceTraveled += Math.abs(car.speed) * deltaTime;
+    distanceTraveled += Math.abs(bestCar.car.speed) * deltaTime;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.translate(0, -car.y + canvas.height * 0.8);
+    ctx.translate(0, -bestCar.car.y + canvas.height * 0.8);
 
     road.draw(ctx);
 
     for (const trafficCar of traffic) {
         trafficCar.draw(ctx);
     }
-    car.draw(ctx);
-    carSensor.draw(ctx);
 
-    networkVisualizer.drawNetwork(time);
+    for (const {car} of carBatches) {
+        ctx.globalAlpha = car === bestCar.car ? 1 : 0.2;
+        car.draw(ctx);
+    }
+    ctx.globalAlpha = 1;
+    bestCar.sensor.draw(ctx);
 
-    debug.update(ctx, fpsCounter, distanceTraveled)
+    networkVisualizer.drawNetwork(time, bestCar.network);
+
+    debug.update(ctx, bestCar.car, fpsCounter, distanceTraveled)
 
     ctx.restore();
     requestAnimationFrame(animate);
