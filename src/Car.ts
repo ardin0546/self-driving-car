@@ -58,12 +58,17 @@ export default class Car {
             this.acceleration = options.acceleration;
         }
 
+        const controlType = options.controlType ?? ControlType.DUMMY;
+
         // @todo probably define controls outside this class
-        this.controls = new Controls(options.controlType ?? ControlType.DUMMY);
+        this.controls = new Controls(controlType);
         // @todo probably define sensors outside this class
-        if (options.controlType === ControlType.NEURAL_NETWORK) {
+        if ([ControlType.KEYBOARD, ControlType.NEURAL_NETWORK].includes(controlType)) {
             this.sensor = new Sensor(this);
-            this.brain = new Network([this.sensor.rayCount, 6, 4]);
+
+            if (controlType === ControlType.NEURAL_NETWORK) {
+                this.brain = new Network([this.sensor.rayCount, 6, 4]);
+            }
         }
     }
 

@@ -32,6 +32,7 @@ const car = new Car({
     y: canvas.height - 100,
     width: 50,
     height: 80,
+    // controlType: ControlType.KEYBOARD,
     controlType: ControlType.NEURAL_NETWORK,
     maxSpeed: 5,
     color: "steelblue",
@@ -85,13 +86,21 @@ const traffic = [
 
 const fpsCounter = new FPSCounter();
 
+let lastTime = 0;
+let distanceTraveled = 0;
+
 const animate = (time: number) => {
+    const deltaTime = (time - lastTime) / 1000; // convert ms to seconds
+    lastTime = time;
     fpsCounter.update(time);
 
     for(const trafficCar of traffic) {
         trafficCar.update(road, traffic);
     }
     car.update(road, traffic);
+
+    // Accumulate distance based on the car's forward speed
+    distanceTraveled += Math.abs(car.speed) * deltaTime;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
@@ -104,7 +113,7 @@ const animate = (time: number) => {
     }
     car.draw(ctx);
 
-    debug.update(ctx, fpsCounter)
+    debug.update(ctx, fpsCounter, distanceTraveled)
 
     ctx.restore();
     requestAnimationFrame(animate);

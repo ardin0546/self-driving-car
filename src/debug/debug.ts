@@ -3,6 +3,7 @@ import {FPSCounter} from "./fpsCounter.ts";
 
 const FPS_ID = 'fps';
 
+const CAR_DISTANCE = 'car-distance';
 const CAR_SPEED_ID = 'car-speed';
 const CAR_ANGLE_ID = 'car-angle';
 const CAR_DAMAGED = 'car-damaged';
@@ -68,6 +69,11 @@ export class Debug {
 
         this.#appendTableRow(
             tableElement,
+            'Distance:',
+            CAR_DISTANCE
+        )
+        this.#appendTableRow(
+            tableElement,
             'Car Speed:',
             CAR_SPEED_ID
         )
@@ -122,11 +128,16 @@ export class Debug {
         return debugElement;
     }
 
-    update(ctx: CanvasRenderingContext2D, fpsCounter: FPSCounter) {
+    update(
+        ctx: CanvasRenderingContext2D,
+        fpsCounter: FPSCounter,
+        distanceTravaled: number
+    ) {
         this.#updateValue(FPS_ID, fpsCounter.getFps());
 
-        this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2) + ' px/s');
-        this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2) + ' rad');
+        this.#updateValue(CAR_DISTANCE, String(Math.round(distanceTravaled)));
+        this.#updateValue(CAR_SPEED_ID, this.car.speed.toFixed(2));
+        this.#updateValue(CAR_ANGLE_ID, this.car.angle.toFixed(2));
         this.#updateValue(CAR_DAMAGED, this.car.isDamaged ? 'Yes' : 'No');
         if (this.showCarPosition) {
             this.#updateValue(CAR_POSITION_ID, `(x: ${this.car.x.toFixed(2)}, y: ${this.car.y.toFixed(2)})`);
