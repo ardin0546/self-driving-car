@@ -4,12 +4,22 @@ import {Road} from "./Road.ts";
 
 // @todo better naming
 const REMOVE_CAR_OFFSET = 400;
+const ADD_CAR_OFFSET = 400;
+
+type Options = {
+    disableAutomatedTraffic?: boolean,
+}
 
 export default class TrafficManager {
     private traffic: Car[] = [];
+    private allowedToGenerateTraffic: boolean = true;
 
-    constructor(road: Road) {
+    constructor(road: Road, options?: Options) {
         this.traffic = this.#createInitialTraffic(road);
+
+        if (options?.disableAutomatedTraffic) {
+            this.allowedToGenerateTraffic = false;
+        }
     }
 
     getTraffic(): Car[] {
@@ -21,6 +31,10 @@ export default class TrafficManager {
             trafficCar.update(road, this.traffic);
         }
 
+        if (!this.allowedToGenerateTraffic) {
+            return;
+        }
+
         const delta = Math.round(this.traffic[0].y - car.y);
         if (delta < REMOVE_CAR_OFFSET) {
             // No car needs to be removed/ add
@@ -28,16 +42,19 @@ export default class TrafficManager {
         }
 
         this.traffic.shift();
-        let latestY = this.traffic.length ? this.traffic[this.traffic.length - 1].y : undefined
-        if (!latestY) {
-            console.log('car.y', car.y);
-            console.log('canvas height', canvas.height);
-            latestY = car.y - canvas.height + 200;
-        }
+        const minY = Math.min(...this.traffic.map(c => c.y));
+        const lasestCar = this.traffic.find(c => c.y === minY);
+
+        const latestCarY = lasestCar ? lasestCar.y : 0;
+        const canvasY = car.y - canvas.height;
+
+        console.log(latestCarY, canvasY);
+
+        const latestY = lasestCar ? lasestCar.y - ADD_CAR_OFFSET : car.y - canvas.height;
 
         this.traffic.push(new Car({
             x: road.getLaneCenter(Math.floor(Math.random() * road.laneCount)),
-            y: latestY - REMOVE_CAR_OFFSET,
+            y: latestY,
             width: 50,
             height: 80,
             controls: new ComputerControls(),
