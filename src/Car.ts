@@ -1,16 +1,16 @@
-import Controls, {ControlType} from "./Controls.ts";
 import {Sensor} from "./Sensor.ts";
 import {Road} from "./Road.ts";
 import {Point} from "./types";
 import {polysIntersect} from "./helpers.ts";
 import {Network} from "./neural-network/Network.ts";
+import Controls from "./controls/Controls.ts";
 
 type CarOptions = {
     x: number,
     y: number,
     width: number,
     height: number,
-    controlType?: ControlType,
+    controls: Controls,
     speed?: number,
     maxSpeed?: number,
     color?: string,
@@ -43,7 +43,6 @@ export default class Car {
     public readonly sensor?: Sensor = undefined;
     public readonly brain?: Network = undefined;
 
-    // @todo make 2 cars (AI and player)
     constructor(options: CarOptions) {
         this.id = Car.nextId++;
         this.x = options.x;
@@ -58,18 +57,7 @@ export default class Car {
             this.acceleration = options.acceleration;
         }
 
-        const controlType = options.controlType ?? ControlType.DUMMY;
-
-        // @todo probably define controls outside this class
-        this.controls = new Controls(controlType);
-        // @todo probably define sensors outside this class
-        if ([ControlType.KEYBOARD, ControlType.NEURAL_NETWORK].includes(controlType)) {
-            this.sensor = new Sensor(this);
-
-            if (controlType === ControlType.NEURAL_NETWORK) {
-                this.brain = new Network([this.sensor.rayCount, 6, 4]);
-            }
-        }
+        this.controls = options.controls;
     }
 
     update(road: Road, traffic?: Car[]) {
@@ -80,22 +68,6 @@ export default class Car {
         this.#move();
         this.polygon = this.#createPolygon();
         this.isDamaged = this.#assessDamage(road, traffic);
-        // @todo better way... just send the classes
-        if (this.sensor) {
-            this.sensor.update(road, traffic ?? []);
-
-            if (this.brain) {
-                const offsets = this.sensor.readings.map(
-                    s => s == null ? 0 : 1 - s.offset
-                );
-                const outputs = Network.feedForward(offsets, this.brain);
-
-                this.controls.forward = Boolean(outputs[0]);
-                this.controls.left = Boolean(outputs[1])
-                this.controls.right = Boolean(outputs[2])
-                this.controls.reverse = Boolean(outputs[3])
-            }
-        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -120,10 +92,6 @@ export default class Car {
             ctx.moveTo(this.polygon[0].x, this.polygon[0].y);
             ctx.lineTo(this.polygon[1].x, this.polygon[1].y);
             ctx.stroke();
-        }
-
-        if (this.sensor) {
-            this.sensor.draw(ctx);
         }
     }
 
@@ -174,11 +142,11 @@ export default class Car {
     }
 
     #move() {
-        if (this.controls.forward) {
+        if (this.controls.forward()) {
             this.speed += this.acceleration;
         }
 
-        if (this.controls.reverse) {
+        if (this.controls.reverse()) {
             this.speed -= this.acceleration;
         }
 
@@ -201,11 +169,11 @@ export default class Car {
 
         if (this.speed !== 0) {
             const flip = this.speed > 0 ? 1 : -1;
-            if (this.controls.left) {
+            if (this.controls.left()) {
                 this.angle += 0.03 * flip;
             }
 
-            if (this.controls.right) {
+            if (this.controls.right()) {
                 this.angle -= 0.03 * flip;
             }
         }

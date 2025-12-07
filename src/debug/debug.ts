@@ -144,10 +144,10 @@ export class Debug {
         }
 
         if (this.showControls) {
-            this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward);
-            this.#updateControl(CAR_CONTROL_LEFT_ID, this.car.controls.left);
-            this.#updateControl(CAR_CONTROL_RIGHT_ID, this.car.controls.right);
-            this.#updateControl(CAR_CONTROL_REVERSE_ID, this.car.controls.reverse);
+            this.#updateControl(CAR_CONTROL_TOP_ID, this.car.controls.forward());
+            this.#updateControl(CAR_CONTROL_LEFT_ID, this.car.controls.left());
+            this.#updateControl(CAR_CONTROL_RIGHT_ID, this.car.controls.right());
+            this.#updateControl(CAR_CONTROL_REVERSE_ID, this.car.controls.reverse());
         }
 
         if (this.showCanvasTranslation) {
