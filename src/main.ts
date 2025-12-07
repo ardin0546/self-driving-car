@@ -4,13 +4,13 @@ import {Road} from "./Road.ts";
 import {Debug} from "./debug/debug.ts";
 import {FPSCounter} from "./debug/fpsCounter.ts";
 import {Sensor} from "./Sensor.ts";
-import {ComputerControls} from "./controls/ComputerControls.ts";
 // @ts-ignore
 import KeyboardControl from "./controls/KeyboardControl.ts";
 import NeuralNetworkControls from "./controls/NeuralNetworkControls.ts";
 import {Network} from "./neural-network/Network.ts";
 import Visualizer from "./neural-network/Visualizer.ts";
 import {getAppElement} from "./helpers.ts";
+import TrafficManager from "./TrafficManager.ts";
 
 type CarBatch = {
     car: Car,
@@ -93,39 +93,7 @@ const debug = new Debug({
 });
 debug.createView();
 
-// @todo create traffic manager class
-// - removes traffic out of bounds
-// - spawns new traffic at random positions
-const traffic = [
-    new Car({
-        x: road.getLaneCenter(1),
-        y: 600,
-        width: 50,
-        height: 80,
-        controls: new ComputerControls(),
-        maxSpeed: 4,
-        color: "orange",
-    }),
-    new Car({
-        x: road.getLaneCenter(2),
-        y: 200,
-        width: 50,
-        height: 80,
-        controls: new ComputerControls(),
-        maxSpeed: 4,
-        color: "orange",
-    }),
-    new Car({
-        x: road.getLaneCenter(0),
-        y: 0,
-        width: 50,
-        height: 80,
-        controls: new ComputerControls(),
-        maxSpeed: 4,
-        color: "orange",
-    }),
-]
-
+const trafficManager = new TrafficManager(road)
 const fpsCounter = new FPSCounter();
 
 let lastTime = 0;
@@ -136,12 +104,10 @@ const animate = (time: number) => {
     lastTime = time;
     fpsCounter.update(time);
 
-    for (const trafficCar of traffic) {
-        trafficCar.update(road, traffic);
-    }
+
     for (const {car, sensor, network, controls} of carBatches) {
-        car.update(road, traffic);
-        sensor.update(road, traffic);
+        car.update(road, trafficManager.getTraffic());
+        sensor.update(road, trafficManager.getTraffic());
         controls.update(sensor, network);
     }
 
@@ -151,18 +117,19 @@ const animate = (time: number) => {
         throw new Error('No best car found');
     }
 
+    trafficManager.update(canvas, road, bestCar.car);
+
     // Accumulate distance based on the car's forward speed
     distanceTraveled += Math.abs(bestCar.car.speed) * deltaTime;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
+
     ctx.translate(0, -bestCar.car.y + canvas.height * 0.8);
 
     road.draw(ctx);
 
-    for (const trafficCar of traffic) {
-        trafficCar.draw(ctx);
-    }
+    trafficManager.draw(ctx);
 
     for (const {car} of carBatches) {
         ctx.globalAlpha = car === bestCar.car ? 1 : 0.2;
@@ -173,7 +140,7 @@ const animate = (time: number) => {
 
     networkVisualizer.drawNetwork(time, bestCar.network);
 
-    debug.update(ctx, bestCar.car, fpsCounter, distanceTraveled)
+    debug.update(ctx, bestCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
 
     ctx.restore();
     requestAnimationFrame(animate);

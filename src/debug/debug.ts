@@ -6,6 +6,7 @@ const FPS_ID = 'fps';
 
 const CAR_DISTANCE = 'car-distance';
 const CAR_SPEED_ID = 'car-speed';
+const CARS_ALIVE_ID = 'cars-alive';
 const CAR_ANGLE_ID = 'car-angle';
 const CAR_DAMAGED = 'car-damaged';
 const CAR_POSITION_ID = 'car-position';
@@ -77,6 +78,11 @@ export class Debug {
         )
         this.#appendTableRow(
             tableElement,
+            'Cars alive:',
+            CARS_ALIVE_ID
+        )
+        this.#appendTableRow(
+            tableElement,
             'Car angle:',
             CAR_ANGLE_ID
         )
@@ -129,6 +135,7 @@ export class Debug {
     update(
         ctx: CanvasRenderingContext2D,
         car: Car,
+        cars: Car[],
         fpsCounter: FPSCounter,
         distanceTravaled: number
     ) {
@@ -136,6 +143,7 @@ export class Debug {
 
         this.#updateValue(CAR_DISTANCE, String(Math.round(distanceTravaled)));
         this.#updateValue(CAR_SPEED_ID, car.speed.toFixed(2));
+        this.#updateValue(CARS_ALIVE_ID, cars.filter(c => !c.isDamaged).length.toString());
         this.#updateValue(CAR_ANGLE_ID, car.angle.toFixed(2));
         this.#updateValue(CAR_DAMAGED, car.isDamaged ? 'Yes' : 'No');
         if (this.showCarPosition) {
