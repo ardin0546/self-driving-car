@@ -9,17 +9,14 @@ import {ComputerControls} from "./controls/ComputerControls.ts";
 import KeyboardControl from "./controls/KeyboardControl.ts";
 import NeuralNetworkControls from "./controls/NeuralNetworkControls.ts";
 import {Network} from "./neural-network/Network.ts";
-
-const app = document.getElementById('app');
-if (!app) {
-    throw new Error('Element with id app not found');
-}
+import Visualizer from "./neural-network/Visualizer.ts";
+import {getAppElement} from "./helpers.ts";
 
 const canvas = document.createElement('canvas');
 canvas.width = 300;
 canvas.height = window.innerHeight;
 canvas.style.backgroundColor = 'lightgray';
-app.appendChild(canvas);
+getAppElement().appendChild(canvas);
 
 const ctx = canvas.getContext('2d');
 if (!ctx) {
@@ -43,12 +40,14 @@ const car = new Car({
     maxSpeed: 5,
     color: "steelblue",
 })
-const carSensor = new Sensor(car);
+const carSensor = new Sensor(car, 10, 150, Math.PI / 1.5);
 const neuralNetwork = new Network([
     carSensor.rayCount,
     6,
     4,
 ]);
+
+const networkVisualizer = new Visualizer(neuralNetwork);
 
 const debug = new Debug(car, {
     slimSize: false,
@@ -131,6 +130,8 @@ const animate = (time: number) => {
     }
     car.draw(ctx);
     carSensor.draw(ctx);
+
+    networkVisualizer.drawNetwork(time);
 
     debug.update(ctx, fpsCounter, distanceTraveled)
 

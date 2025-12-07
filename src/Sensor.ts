@@ -8,7 +8,7 @@ type Reading = Point & { offset: number };
 export class Sensor {
     constructor(
         public car: Car,
-        public rayCount = 7,
+        public rayCount = 3,
         public rayLength = 150,
         public raySpread = Math.PI / 2,
         public rays: Point[][] = [],

@@ -1,5 +1,6 @@
 import Car from "../Car.ts";
 import {FPSCounter} from "./fpsCounter.ts";
+import {getAppElement} from "../helpers.ts";
 
 const FPS_ID = 'fps';
 
@@ -56,7 +57,7 @@ export class Debug {
         debugElement.style.color = '#000';
         debugElement.style.zIndex = '1000';
 
-        document.body.appendChild(debugElement);
+        getAppElement().appendChild(debugElement);
 
         const tableElement = document.createElement('table');
         tableElement.style.width = '100%';
