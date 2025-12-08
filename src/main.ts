@@ -42,7 +42,7 @@ const road = new Road(
 const generateCarBatch = (batchSize: number): CarBatch[] => {
     const batches: CarBatch[] = [];
     for (let i = 0; i < batchSize; i++) {
-        const controls = new KeyboardControl();
+        const controls = new NeuralNetworkControls();
 
         const car = new Car({
             x: road.getLaneCenter(1),
@@ -65,8 +65,9 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
     return batches;
 }
 
-const carBatches: CarBatch[] = generateCarBatch(1);
+const carBatches: CarBatch[] = generateCarBatch(10);
 let bestCar = carBatches[0];
+let selectedCar: CarBatch | null = null;
 
 const storage = new Storage(bestCar);
 const savedNetwork = storage.load();
@@ -132,7 +133,8 @@ const animate = (time: number) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
-    ctx.translate(0, -bestCar.car.y + canvas.height - bestCar.car.width - 50);
+    const cameraBatchCar = selectedCar ? selectedCar : bestCar;
+    ctx.translate(0, -cameraBatchCar.car.y + canvas.height - cameraBatchCar.car.width - 50);
 
     road.draw(ctx);
 
@@ -143,18 +145,64 @@ const animate = (time: number) => {
         car.draw(ctx);
     }
     ctx.globalAlpha = 1;
-    bestCar.sensor.draw(ctx);
+    cameraBatchCar.sensor.draw(ctx);
     ctx.restore();
 
     networkVisualizer.drawNetwork(time, bestCar.network);
 
-    debug.update(ctx, bestCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
+    debug.update(ctx, cameraBatchCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
     if (!isPaused) {
         requestAnimationFrame(animate);
     }
 }
 
 requestAnimationFrame(animate);
+
+declare type Window = {
+    resetSelectedCar: () => void;
+    goToCar: (id: number) => void;
+    nextSelectedCar: () => void;
+    activeCars: () => void;
+}
+
+declare global {
+    interface Window {
+        resetSelectedCar: () => void;
+        goToCar: (id: number) => void;
+        nextSelectedCar: () => void;
+        activeCars: () => void;
+    }
+}
+
+window.resetSelectedCar = () => {
+    selectedCar = null;
+}
+window.activeCars = () => {
+    console.log(carBatches.filter(carBatch => !carBatch.car.isDamaged).sort((a, b) => a.car.y - b.car.y).map(carBath => ({
+        id: carBath.car.id,
+        y: carBath.car.y,
+    })))
+}
+// replace existing goToCar
+window.goToCar = (id: number) => {
+    const carBatch = carBatches.find(cb => cb.car.id === id);
+    if (!carBatch) {
+        console.warn(`[goToCar] no car with id ${id}`);
+        return;
+    }
+
+    // Optionally prevent focusing damaged cars — remove check if you want to allow that
+    if (carBatch.car.isDamaged) {
+        console.warn(`[goToCar] car ${id} is damaged; selecting anyway.`);
+        // if you DON'T want to select damaged cars, uncomment:
+        // return;
+    }
+
+    const prevId = selectedCar?.car.id ?? null;
+    selectedCar = carBatch; // set to the exact object from carBatches
+    console.log(`[goToCar] selectedCar changed: ${prevId} -> ${selectedCar.car.id}`);
+};
+
 
 window.addEventListener('keypress', (event) => {
     console.log('event', event.key)

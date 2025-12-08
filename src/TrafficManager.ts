@@ -104,7 +104,6 @@ export default class TrafficManager {
     }
 
     #carConstructor(point: Point, speed = 4): Car {
-        speed = 0;
 
         return new Car({
             x: point.x,
