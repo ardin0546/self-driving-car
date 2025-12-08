@@ -13,6 +13,12 @@ export class Network {
         }
     }
 
+    static fromJSON(data: any): Network {
+        const net = new Network([]); // no need to pass neurons
+        net.levels = data.levels.map((l: any) => Level.fromJSON(l));
+        return net;
+    }
+
     static mutate(network: Network, amount = 1) {
         for (const level of network.levels) {
             for (let i = 0; i < level.biases.length; i++) {

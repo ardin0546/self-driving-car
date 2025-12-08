@@ -76,6 +76,11 @@ export default class TrafficManager {
         }
     }
 
+    reset() {
+        this.traffic = [];
+        this.lastSpawnedCarY = 0;
+    }
+
     createInitialTraffic(road: Road, playerCar: Car) {
         this.lastSpawnedCarY = playerCar.y;
 

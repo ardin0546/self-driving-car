@@ -22,6 +22,8 @@ type CarBatch = {
     network: Network,
 }
 
+const CAR_BATCH_COUNT = 1000;
+
 const canvas = document.createElement('canvas');
 canvas.width = 300;
 canvas.height = window.innerHeight;
@@ -38,10 +40,11 @@ const road = new Road(
     canvas.width * 0.9,
     3
 )
+const storage = new Storage();
 
-const generateCarBatch = (batchSize: number): CarBatch[] => {
+const generateCarBatch = (): CarBatch[] => {
     const batches: CarBatch[] = [];
-    for (let i = 0; i < batchSize; i++) {
+    for (let i = 0; i < CAR_BATCH_COUNT; i++) {
         const controls = new NeuralNetworkControls();
 
         const car = new Car({
@@ -54,31 +57,33 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
             color: "steelblue",
         });
         const sensor = new Sensor(car, 5, 250, Math.PI / 1.5);
-        const network = new Network([
-            sensor.rayCount,
-            6,
-            4,
-        ]);
+
+        let network: Network;
+
+        const loaded = storage.load()
+        if (loaded) {
+            network = loaded.network;
+            if (i !== 0) {
+                Network.mutate(network, 0.2);
+            }
+        } else {
+            network = new Network([
+                sensor.rayCount,
+                6,
+                4,
+            ]);
+        }
+
         batches.push({car, controls: controls, sensor, network});
+
     }
 
     return batches;
 }
 
-const carBatches: CarBatch[] = generateCarBatch(10);
+let carBatches: CarBatch[] = generateCarBatch();
 let bestCar = carBatches[0];
 let selectedCar: CarBatch | null = null;
-
-const storage = new Storage(bestCar);
-const savedNetwork = storage.load();
-if (savedNetwork) {
-    for (const carBatch of carBatches) {
-        carBatch.network = JSON.parse(savedNetwork) as Network;
-        if (carBatch !== bestCar) {
-            Network.mutate(carBatch.network, 0.15);
-        }
-    }
-}
 
 const networkVisualizer = new Visualizer();
 
@@ -96,11 +101,54 @@ const trafficManager = new TrafficManager({
 })
 trafficManager.createInitialTraffic(road, bestCar.car)
 
-const fpsCounter = new FPSCounter();
+let fpsCounter = new FPSCounter();
+
+let rafId: number | null = null;
 
 let isPaused = false;
 let lastTime = 0;
 let distanceTraveled = 0;
+
+const loaded = storage.load();
+let highestDistance = loaded?.distance ?? 0;
+let numberOfIterations = loaded?.iteration ?? 0;
+
+let timeout: number | null = null;
+
+const restart = () => {
+    // cancel any running RAF to avoid duplicate loops
+    if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+
+    carBatches = generateCarBatch();
+    bestCar = carBatches[0];
+
+    trafficManager.reset();
+    trafficManager.createInitialTraffic(road, bestCar.car);
+    distanceTraveled = 0;
+
+    numberOfIterations++;
+
+    selectedCar = null;
+    isPaused = false;
+    lastTime = performance.now();
+    fpsCounter = new FPSCounter();
+
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+
+    console.log('starting iteration', numberOfIterations);
+    timeout = window.setTimeout(() => {
+        // set lastTime again at the moment we're about to animate (safer)
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(animate);
+        timeout = null;
+    }, 500);
+}
 
 const animate = (time: number) => {
     const deltaTime = (time - lastTime) / 1000; // convert ms to seconds
@@ -111,7 +159,6 @@ const animate = (time: number) => {
     const newBestCar = carBatches.find(carBatch => carBatch.car.y === minCarY);
     if (newBestCar) {
         bestCar = newBestCar;
-        storage.setBestCar(bestCar);
     }
 
     for (const {car, sensor, network, controls} of carBatches) {
@@ -123,6 +170,30 @@ const animate = (time: number) => {
         if (controls instanceof NeuralNetworkControls) {
             controls.update(sensor, network);
         }
+    }
+
+    if (!bestCar.car.isDamaged && timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+
+    if (bestCar.car.isDamaged && !timeout) {
+        timeout = setTimeout(() => {
+            isPaused = true;
+            console.log('Best car is damaged. Pausing simulation.');
+
+            if (distanceTraveled > highestDistance) {
+                console.log('saving new network..', bestCar.network)
+                storage.save(
+                    distanceTraveled,
+                    bestCar.network,
+                    numberOfIterations + 1,
+                )
+                highestDistance = distanceTraveled;
+            }
+
+            restart();
+        }, 3_000);
     }
 
     trafficManager.update(canvas, road, bestCar.car);
@@ -150,9 +221,11 @@ const animate = (time: number) => {
 
     networkVisualizer.drawNetwork(time, bestCar.network);
 
-    debug.update(ctx, cameraBatchCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
+    debug.update(ctx, cameraBatchCar.car, carBatches.map(c => c.car), fpsCounter, highestDistance, distanceTraveled, numberOfIterations)
     if (!isPaused) {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
+    } else {
+        rafId = null;
     }
 }
 
@@ -171,6 +244,8 @@ declare global {
         goToCar: (id: number) => void;
         nextSelectedCar: () => void;
         activeCars: () => void;
+        reset: () => void;
+        discardNetwork: () => void;
     }
 }
 
@@ -203,6 +278,11 @@ window.goToCar = (id: number) => {
     console.log(`[goToCar] selectedCar changed: ${prevId} -> ${selectedCar.car.id}`);
 };
 
+window.reset = () => restart();
+window.discardNetwork = () => {
+    storage.discard();
+    window.location.reload();
+}
 
 window.addEventListener('keypress', (event) => {
     console.log('event', event.key)

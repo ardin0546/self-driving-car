@@ -20,6 +20,16 @@ export default class Level {
         Level.#randomize(this);
     }
 
+    static fromJSON(data: any): Level {
+        const level = new Level(data.inputs.length, data.outputs.length);
+        // Override the random weights/biases
+        level.inputs = [...data.inputs];
+        level.outputs = [...data.outputs];
+        level.biases = [...data.biases];
+        level.weights = data.weights.map((row: number[]) => [...row]);
+        return level;
+    }
+
     static #randomize(level: Level) {
         for (let i = 0; i < level.inputs.length; i++) {
             for (let j = 0; j < level.outputs.length; j++) {
