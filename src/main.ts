@@ -94,6 +94,7 @@ const trafficManager = new TrafficManager(road, {
 })
 const fpsCounter = new FPSCounter();
 
+let isPaused = false;
 let lastTime = 0;
 let distanceTraveled = 0;
 
@@ -146,7 +147,20 @@ const animate = (time: number) => {
     debug.update(ctx, bestCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
 
     ctx.restore();
-    requestAnimationFrame(animate);
+
+    if (!isPaused) {
+        requestAnimationFrame(animate);
+    }
 }
 
 requestAnimationFrame(animate);
+
+window.addEventListener('keypress', (event) => {
+    console.log('event', event.key)
+    if (event.key === 'Enter' || event.key === 'p') {
+        isPaused = !isPaused;
+        if (!isPaused) {
+            requestAnimationFrame(animate);
+        }
+    }
+})
