@@ -41,6 +41,7 @@ export default class Car {
 
     public readonly controls: Controls;
     public readonly sensor?: Sensor = undefined;
+    // @todo remove brain
     public readonly brain?: Network = undefined;
 
     constructor(options: CarOptions) {

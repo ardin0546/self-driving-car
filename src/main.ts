@@ -16,6 +16,7 @@ import Controls from "./controls/Controls.ts";
 
 type CarBatch = {
     car: Car,
+    // @todo remove control, is already in car
     controls: Controls,
     sensor: Sensor,
     network: Network,
@@ -41,7 +42,7 @@ const road = new Road(
 const generateCarBatch = (batchSize: number): CarBatch[] => {
     const batches: CarBatch[] = [];
     for (let i = 0; i < batchSize; i++) {
-        const controls = new NeuralNetworkControls();
+        const controls = new KeyboardControl();
 
         const car = new Car({
             x: road.getLaneCenter(1),
@@ -89,9 +90,11 @@ const debug = new Debug({
 });
 debug.createView();
 
-const trafficManager = new TrafficManager(road, {
-    // disableAutomatedTraffic: false,
+const trafficManager = new TrafficManager({
+    debugSpawnCars: true,
 })
+trafficManager.createInitialTraffic(road, bestCar.car)
+
 const fpsCounter = new FPSCounter();
 
 let isPaused = false;
@@ -102,6 +105,13 @@ const animate = (time: number) => {
     const deltaTime = (time - lastTime) / 1000; // convert ms to seconds
     lastTime = time;
     fpsCounter.update(time);
+
+    const minCarY = Math.min(...carBatches.map(carBatch => carBatch.car.y));
+    const newBestCar = carBatches.find(carBatch => carBatch.car.y === minCarY);
+    if (newBestCar) {
+        bestCar = newBestCar;
+        storage.setBestCar(bestCar);
+    }
 
     for (const {car, sensor, network, controls} of carBatches) {
         if (car.isDamaged) {
@@ -114,22 +124,15 @@ const animate = (time: number) => {
         }
     }
 
-    const minCarY = Math.min(...carBatches.map(carBatch => carBatch.car.y));
-    const newBestCar = carBatches.find(carBatch => carBatch.car.y === minCarY);
-    if (newBestCar) {
-        bestCar = newBestCar;
-        storage.setBestCar(bestCar);
-    }
-
     trafficManager.update(canvas, road, bestCar.car);
 
     // Accumulate distance based on the car's forward speed
-    distanceTraveled += Math.abs(bestCar.car.speed) * deltaTime;
+    distanceTraveled += bestCar.car.speed * deltaTime;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
-    ctx.translate(0, -bestCar.car.y + canvas.height * 0.8);
+    ctx.translate(0, -bestCar.car.y + canvas.height - bestCar.car.width - 50);
 
     road.draw(ctx);
 
@@ -141,13 +144,11 @@ const animate = (time: number) => {
     }
     ctx.globalAlpha = 1;
     bestCar.sensor.draw(ctx);
+    ctx.restore();
 
     networkVisualizer.drawNetwork(time, bestCar.network);
 
     debug.update(ctx, bestCar.car, carBatches.map(c => c.car), fpsCounter, distanceTraveled)
-
-    ctx.restore();
-
     if (!isPaused) {
         requestAnimationFrame(animate);
     }

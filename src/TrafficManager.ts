@@ -1,24 +1,29 @@
 import Car from "./Car.ts";
 import {ComputerControls} from "./controls/ComputerControls.ts";
 import {Road} from "./Road.ts";
-
-// @todo better naming
-const REMOVE_CAR_OFFSET = 400;
-const ADD_CAR_OFFSET = 400;
+import {Point} from "./types";
 
 type Options = {
     disableAutomatedTraffic?: boolean,
+    debugSpawnCars?: boolean,
 }
 
 export default class TrafficManager {
+    private readonly allowedToGenerateTraffic: boolean = true;
+    private readonly debugSpawnCars: boolean = false;
+
     private traffic: Car[] = [];
-    private allowedToGenerateTraffic: boolean = true;
 
-    constructor(road: Road, options?: Options) {
-        this.traffic = this.#createInitialTraffic(road);
+    private spawnDistance: number = 500;
+    public lastSpawnedCarY: number = 0;
 
+    constructor(options?: Options) {
         if (options?.disableAutomatedTraffic) {
             this.allowedToGenerateTraffic = false;
+        }
+
+        if (options?.debugSpawnCars) {
+            this.debugSpawnCars = true;
         }
     }
 
@@ -26,7 +31,7 @@ export default class TrafficManager {
         return this.traffic;
     }
 
-    update(canvas: HTMLCanvasElement, road: Road, car: Car) {
+    update(canvas: HTMLCanvasElement, road: Road, playerCar: Car) {
         for (const trafficCar of this.traffic) {
             trafficCar.update(road, this.traffic);
         }
@@ -35,32 +40,34 @@ export default class TrafficManager {
             return;
         }
 
-        const delta = Math.round(this.traffic[0].y - car.y);
-        if (delta < REMOVE_CAR_OFFSET) {
-            // No car needs to be removed/ add
-            return;
+        const lastCar = this.traffic[this.traffic.length - 1];
+        const canvasTop = playerCar.y - canvas.height;
+
+        const shouldSpawnNewCar = !Boolean(lastCar) || (lastCar.y - canvasTop > this.spawnDistance);
+
+        if (shouldSpawnNewCar) {
+            this.spawnNext(road, canvasTop);
+        }
+    }
+
+    spawnNext(road: Road, canvasTop: number) {
+        const a = road.getLaneCenter(Math.floor(Math.random() * road.laneCount));
+        const b = road.getLaneCenter(Math.floor(Math.random() * road.laneCount));
+
+        const xValues = a === b ? [a] : [a, b];
+
+        const nextY = this.lastSpawnedCarY - this.spawnDistance;
+        const y = Math.min(nextY, canvasTop);
+
+        for (const x of xValues) {
+            const newCar = this.#carConstructor({x, y});
+            this.traffic.push(newCar);
         }
 
-        this.traffic.shift();
-        const minY = Math.min(...this.traffic.map(c => c.y));
-        const lasestCar = this.traffic.find(c => c.y === minY);
-
-        const latestCarY = lasestCar ? lasestCar.y : 0;
-        const canvasY = car.y - canvas.height;
-
-        console.log(latestCarY, canvasY);
-
-        const latestY = lasestCar ? lasestCar.y - ADD_CAR_OFFSET : car.y - canvas.height;
-
-        this.traffic.push(new Car({
-            x: road.getLaneCenter(Math.floor(Math.random() * road.laneCount)),
-            y: latestY,
-            width: 50,
-            height: 80,
-            controls: new ComputerControls(),
-            maxSpeed: Math.round(Math.random() * car.maxSpeed- 2),
-            color: "orange",
-        }));
+        this.lastSpawnedCarY = y;
+        if (this.debugSpawnCars) {
+            console.log(`spawned ${xValues.length} traffic car(s) at y=${y}`);
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -69,35 +76,45 @@ export default class TrafficManager {
         }
     }
 
-    #createInitialTraffic(road: Road) {
-        return [
-            new Car({
-                x: road.getLaneCenter(1),
-                y: 600,
-                width: 50,
-                height: 80,
-                controls: new ComputerControls(),
-                maxSpeed: 4,
-                color: "orange",
-            }),
-            new Car({
-                x: road.getLaneCenter(2),
-                y: 200,
-                width: 50,
-                height: 80,
-                controls: new ComputerControls(),
-                maxSpeed: 4,
-                color: "orange",
-            }),
-            new Car({
-                x: road.getLaneCenter(0),
-                y: 0,
-                width: 50,
-                height: 80,
-                controls: new ComputerControls(),
-                maxSpeed: 4,
-                color: "orange",
-            }),
-        ];
+    createInitialTraffic(road: Road, playerCar: Car) {
+        this.lastSpawnedCarY = playerCar.y;
+
+        const create = (xValues: number[]) => {
+            const y = this.lastSpawnedCarY - this.spawnDistance;
+
+            for (const x of xValues) {
+                const newCar = this.#carConstructor({x, y});
+                this.traffic.push(newCar);
+            }
+
+            this.lastSpawnedCarY = y;
+        }
+
+        create([road.getLaneCenter(1)])
+        create([road.getLaneCenter(0), road.getLaneCenter(2)]);
+        create([road.getLaneCenter(1), road.getLaneCenter(2)]);
+        create([road.getLaneCenter(0)]);
+        create([road.getLaneCenter(1), road.getLaneCenter(2)]);
+        create([road.getLaneCenter(0), road.getLaneCenter(1)]);
+        create([road.getLaneCenter(0), road.getLaneCenter(2)]);
+        create([road.getLaneCenter(1)]);
+        create([road.getLaneCenter(0)]);
+        create([road.getLaneCenter(1)]);
+        create([road.getLaneCenter(2)]);
+    }
+
+    #carConstructor(point: Point, speed = 4): Car {
+        speed = 0;
+
+        return new Car({
+            x: point.x,
+            y: point.y,
+            width: 50,
+            height: 80,
+            controls: new ComputerControls(),
+            speed: speed,
+            maxSpeed: speed,
+            color: "orange",
+        });
     }
 }
