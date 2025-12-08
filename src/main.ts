@@ -12,10 +12,11 @@ import Visualizer from "./neural-network/Visualizer.ts";
 import {getAppElement} from "./helpers.ts";
 import TrafficManager from "./TrafficManager.ts";
 import Storage from "./neural-network/Storage.ts";
+import Controls from "./controls/Controls.ts";
 
 type CarBatch = {
     car: Car,
-    controls: NeuralNetworkControls,
+    controls: Controls,
     sensor: Sensor,
     network: Network,
 }
@@ -51,7 +52,7 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
             controls: controls,
             color: "steelblue",
         });
-        const sensor = new Sensor(car, 10, 150, Math.PI);
+        const sensor = new Sensor(car, 5, 250, Math.PI / 1.5);
         const network = new Network([
             sensor.rayCount,
             6,
@@ -63,30 +64,20 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
     return batches;
 }
 
-// @todo change this number to adjust the number of cars being simulated
-const carBatches: CarBatch[] = generateCarBatch(10);
+const carBatches: CarBatch[] = generateCarBatch(1);
 let bestCar = carBatches[0];
 
-// const neuralNetworkControls = new NeuralNetworkControls();
-// const car = new Car({
-//     x: road.getLaneCenter(1),
-//     y: canvas.height - 100,
-//     width: 50,
-//     height: 80,
-//     controls: neuralNetworkControls,
-//     // controls: new KeyboardControl(),
-//     maxSpeed: 5,
-//     color: "steelblue",
-// })
-// const carSensor = new Sensor(car, 10, 150, Math.PI / 1.5);
-// const neuralNetwork = new Network([
-//     carSensor.rayCount,
-//     6,
-//     4,
-// ]);
-
 const storage = new Storage(bestCar);
-storage.load()
+const savedNetwork = storage.load();
+if (savedNetwork) {
+    for (const carBatch of carBatches) {
+        carBatch.network = JSON.parse(savedNetwork) as Network;
+        if (carBatch !== bestCar) {
+            Network.mutate(carBatch.network, 0.15);
+        }
+    }
+}
+
 const networkVisualizer = new Visualizer();
 
 const debug = new Debug({
@@ -99,7 +90,7 @@ const debug = new Debug({
 debug.createView();
 
 const trafficManager = new TrafficManager(road, {
-    disableAutomatedTraffic: true,
+    // disableAutomatedTraffic: false,
 })
 const fpsCounter = new FPSCounter();
 
@@ -117,13 +108,16 @@ const animate = (time: number) => {
         }
         car.update(road, trafficManager.getTraffic());
         sensor.update(road, trafficManager.getTraffic());
-        controls.update(sensor, network);
+        if (controls instanceof NeuralNetworkControls) {
+            controls.update(sensor, network);
+        }
     }
 
     const minCarY = Math.min(...carBatches.map(carBatch => carBatch.car.y));
-    const newBestCar = carBatches.find(carBatch =>carBatch.car.y === minCarY);
+    const newBestCar = carBatches.find(carBatch => carBatch.car.y === minCarY);
     if (newBestCar) {
         bestCar = newBestCar;
+        storage.setBestCar(bestCar);
     }
 
     trafficManager.update(canvas, road, bestCar.car);

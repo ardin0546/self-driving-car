@@ -1,8 +1,8 @@
 export default class Level {
-    public readonly inputs: number[];
-    public readonly outputs: number[];
-    public readonly biases: number[];
-    public readonly weights: number[][];
+    public inputs: number[];
+    public outputs: number[];
+    public biases: number[];
+    public weights: number[][];
 
     constructor(
         public readonly inputCount: number,

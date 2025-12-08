@@ -3,22 +3,24 @@ import {Network} from "./Network.ts";
 import {getAppElement} from "../helpers.ts";
 
 export default class Storage {
-    private bestCar: {car: Car, network: Network};
+    private bestCar: { car: Car, network: Network };
 
-    constructor(bestCar: {car: Car, network: Network}) {
+    // @todo rethink approach. Maybe global car handler
+    constructor(bestCar: { car: Car, network: Network }) {
         this.bestCar = bestCar;
         this.#createElement();
     }
 
-    load() {
-        const bestNetwork = localStorage.getItem("bestNetwork");
-        if (bestNetwork) {
+    setBestCar(bestCar: { car: Car, network: Network }) {
+        this.bestCar = bestCar;
+    }
 
-            this.bestCar.network = JSON.parse(bestNetwork);
-        }
+    load(): string | null {
+        return localStorage.getItem("bestNetwork");
     }
 
     save() {
+        console.log('bestCar id', this.bestCar.car.id)
         localStorage.setItem(
             "bestNetwork",
             JSON.stringify(this.bestCar.network)

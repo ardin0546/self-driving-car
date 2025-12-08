@@ -51,8 +51,8 @@ export default class Car {
         this.height = options.height;
         this.color = options.color ?? "blue";
 
-        this.speed = options.speed || 0;
-        this.maxSpeed = options.maxSpeed || 10;
+        this.speed = options.speed ?? 0;
+        this.maxSpeed = options.maxSpeed ?? 10;
         if (options.acceleration && options.acceleration > 0) {
             this.acceleration = options.acceleration;
         }
