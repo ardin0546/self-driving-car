@@ -11,6 +11,7 @@ import {Network} from "./neural-network/Network.ts";
 import Visualizer from "./neural-network/Visualizer.ts";
 import {getAppElement} from "./helpers.ts";
 import TrafficManager from "./TrafficManager.ts";
+import Storage from "./neural-network/Storage.ts";
 
 type CarBatch = {
     car: Car,
@@ -63,7 +64,8 @@ const generateCarBatch = (batchSize: number): CarBatch[] => {
 }
 
 // @todo change this number to adjust the number of cars being simulated
-const carBatches: CarBatch[] = generateCarBatch(6000);
+const carBatches: CarBatch[] = generateCarBatch(10);
+let bestCar = carBatches[0];
 
 // const neuralNetworkControls = new NeuralNetworkControls();
 // const car = new Car({
@@ -83,6 +85,8 @@ const carBatches: CarBatch[] = generateCarBatch(6000);
 //     4,
 // ]);
 
+const storage = new Storage(bestCar);
+storage.load()
 const networkVisualizer = new Visualizer();
 
 const debug = new Debug({
@@ -117,9 +121,9 @@ const animate = (time: number) => {
     }
 
     const minCarY = Math.min(...carBatches.map(carBatch => carBatch.car.y));
-    const bestCar = carBatches.find(carBatch =>carBatch.car.y === minCarY);
-    if (!bestCar) {
-        throw new Error('No best car found');
+    const newBestCar = carBatches.find(carBatch =>carBatch.car.y === minCarY);
+    if (newBestCar) {
+        bestCar = newBestCar;
     }
 
     trafficManager.update(canvas, road, bestCar.car);

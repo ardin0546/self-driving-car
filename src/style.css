@@ -3,5 +3,9 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: darkgray;
-  text-align: right;
+}
+
+#app {
+  display: flex;
+  padding-left: 6rem;
 }

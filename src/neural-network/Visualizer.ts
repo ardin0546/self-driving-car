@@ -6,7 +6,24 @@ export default class Visualizer {
     public readonly ctx: CanvasRenderingContext2D;
 
     constructor() {
-        this.ctx = Visualizer.#createCanvas();
+        this.ctx = this.#createCanvas();
+    }
+
+    #createCanvas(): CanvasRenderingContext2D {
+        const canvas = document.createElement("canvas");
+        canvas.width = 500;
+        canvas.height = window.innerHeight;
+        canvas.style.backgroundColor = "dimgray";
+        // canvas.style.marginLeft = "3rem";
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+            throw new Error("Could not get canvas context");
+        }
+
+        getAppElement().appendChild(canvas);
+
+        return ctx;
     }
 
     drawNetwork(time: number, network: Network) {
@@ -129,22 +146,5 @@ export default class Visualizer {
             right,
             totalNodes === 1 ? 0.5 : index / (totalNodes - 1)
         );
-    }
-
-    static #createCanvas(): CanvasRenderingContext2D {
-        const canvas = document.createElement("canvas");
-        canvas.width = 600;
-        canvas.height = window.innerHeight;
-        canvas.style.backgroundColor = "dimgray";
-        canvas.style.marginLeft = "3rem";
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-            throw new Error("Could not get canvas context");
-        }
-
-        getAppElement().appendChild(canvas);
-
-        return ctx;
     }
 }
