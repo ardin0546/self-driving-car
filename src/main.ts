@@ -44,11 +44,20 @@ const storage = new Storage();
 
 const loaded = storage.load();
 let highestDistance = loaded?.distance ?? 0;
-// let numberOfIterations = loaded?.iteration ?? 0;
-let numberOfIterations = 0;
+let numberOfIterations = loaded?.iteration ?? 0;
 
 const calculateMutationRate = (iteration: number): number => {
-    let mutate = 0.08;
+    if (numberOfIterations < 5) {
+        return 0.1;
+    }
+
+    let mutate;
+
+    if (numberOfIterations > 10) {
+        mutate = 0.01;
+    } else {
+        mutate = 0.05;
+    }
 
     mutate += (Math.abs(numberOfIterations - iteration) * 0.01)
     mutate = Math.round(mutate * 100) / 100;
@@ -58,6 +67,8 @@ const calculateMutationRate = (iteration: number): number => {
 
 const generateCarBatch = (): CarBatch[] => {
     const batches: CarBatch[] = [];
+
+    let log = true;
 
     for (let i = 0; i < CAR_BATCH_COUNT; i++) {
         const controls = new NeuralNetworkControls();
@@ -79,7 +90,13 @@ const generateCarBatch = (): CarBatch[] => {
         if (loaded) {
             network = loaded.network;
             if (i !== 0) {
-                Network.mutate(network, calculateMutationRate((loaded.iteration ?? 0)));
+                const mutationRate = calculateMutationRate(100);
+                if (log) {
+                    console.log(`Applying mutation rate of ${mutationRate} (iteration ${numberOfIterations} vs loaded ${loaded.iteration})`);
+                    log = false;
+                }
+
+                Network.mutate(network, mutationRate);
             }
         } else {
             network = new Network([

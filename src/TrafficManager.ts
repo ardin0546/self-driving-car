@@ -8,6 +8,11 @@ type Options = {
     debugSpawnCars?: boolean,
 }
 
+type CarConstructorOptions = {
+    speed?: number,
+    color?: string,
+}
+
 export default class TrafficManager {
     private readonly allowedToGenerateTraffic: boolean = true;
     private readonly debugSpawnCars: boolean = false;
@@ -98,7 +103,7 @@ export default class TrafficManager {
 
             for (const lane of lanes) {
                 const x = road.getLaneCenter(lane)
-                const newCar = this.#carConstructor({x, y});
+                const newCar = this.#carConstructor({x, y}, {color: "darkorchid"});
                 this.traffic.push(newCar);
             }
 
@@ -118,16 +123,16 @@ export default class TrafficManager {
         create([2]);
     }
 
-    #carConstructor(point: Point, speed = 4): Car {
+    #carConstructor(point: Point, options?: CarConstructorOptions): Car {
         return new Car({
             x: point.x,
             y: point.y,
             width: 50,
             height: 80,
             controls: new ComputerControls(),
-            speed: speed,
-            maxSpeed: speed,
-            color: "orange",
+            speed: options?.speed ?? 3,
+            maxSpeed: options?.speed ?? 3,
+            color: options?.color ?? "orange",
         });
     }
 }
