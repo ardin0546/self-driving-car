@@ -42,8 +42,23 @@ const road = new Road(
 )
 const storage = new Storage();
 
+const loaded = storage.load();
+let highestDistance = loaded?.distance ?? 0;
+// let numberOfIterations = loaded?.iteration ?? 0;
+let numberOfIterations = 0;
+
+const calculateMutationRate = (iteration: number): number => {
+    let mutate = 0.08;
+
+    mutate += (Math.abs(numberOfIterations - iteration) * 0.01)
+    mutate = Math.round(mutate * 100) / 100;
+
+    return mutate;
+}
+
 const generateCarBatch = (): CarBatch[] => {
     const batches: CarBatch[] = [];
+
     for (let i = 0; i < CAR_BATCH_COUNT; i++) {
         const controls = new NeuralNetworkControls();
 
@@ -52,11 +67,11 @@ const generateCarBatch = (): CarBatch[] => {
             y: canvas.height - 100,
             width: 50,
             height: 80,
-            maxSpeed: 6,
+            maxSpeed: 7,
             controls: controls,
             color: "steelblue",
         });
-        const sensor = new Sensor(car, 5, 250, Math.PI / 1.5);
+        const sensor = new Sensor(car, 11, 250, Math.PI / 1.2);
 
         let network: Network;
 
@@ -64,7 +79,7 @@ const generateCarBatch = (): CarBatch[] => {
         if (loaded) {
             network = loaded.network;
             if (i !== 0) {
-                Network.mutate(network, 0.2);
+                Network.mutate(network, calculateMutationRate((loaded.iteration ?? 0)));
             }
         } else {
             network = new Network([
@@ -97,7 +112,7 @@ const debug = new Debug({
 debug.createView();
 
 const trafficManager = new TrafficManager({
-    debugSpawnCars: true,
+    debugSpawnCars: false,
 })
 trafficManager.createInitialTraffic(road, bestCar.car)
 
@@ -109,9 +124,8 @@ let isPaused = false;
 let lastTime = 0;
 let distanceTraveled = 0;
 
-const loaded = storage.load();
-let highestDistance = loaded?.distance ?? 0;
-let numberOfIterations = loaded?.iteration ?? 0;
+const distanceGap = 150;
+let nextDistanceCheckpoint = distanceTraveled - distanceGap;
 
 let timeout: number | null = null;
 
@@ -121,6 +135,8 @@ const restart = () => {
         cancelAnimationFrame(rafId);
         rafId = null;
     }
+
+    Car.nextId = 1;
 
     carBatches = generateCarBatch();
     bestCar = carBatches[0];
@@ -161,6 +177,16 @@ const animate = (time: number) => {
         bestCar = newBestCar;
     }
 
+    // const maxCarY = Math.max(
+    //     ...carBatches
+    //         .filter(carBatch => !carBatch.car.isDamaged)
+    //         .map(carBatch => carBatch.car.y)
+    // );
+    // const worstCar = carBatches.find(carBatch => carBatch.car.y === maxCarY);
+    // if (worstCar) {
+    //     selectedCar = worstCar;
+    // }
+
     for (const {car, sensor, network, controls} of carBatches) {
         if (car.isDamaged) {
             continue;
@@ -200,6 +226,11 @@ const animate = (time: number) => {
 
     // Accumulate distance based on the car's forward speed
     distanceTraveled += bestCar.car.speed * deltaTime;
+    nextDistanceCheckpoint += bestCar.car.speed * deltaTime;
+    if (nextDistanceCheckpoint > 0) {
+        nextDistanceCheckpoint = -distanceGap;
+        trafficManager.increaseDifficulty();
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
@@ -221,7 +252,7 @@ const animate = (time: number) => {
 
     networkVisualizer.drawNetwork(time, bestCar.network);
 
-    debug.update(ctx, cameraBatchCar.car, carBatches.map(c => c.car), fpsCounter, highestDistance, distanceTraveled, numberOfIterations)
+    debug.update(ctx, cameraBatchCar.car, carBatches.map(c => c.car), fpsCounter, highestDistance, nextDistanceCheckpoint, distanceTraveled, numberOfIterations)
     if (!isPaused) {
         rafId = requestAnimationFrame(animate);
     } else {
@@ -240,11 +271,14 @@ declare type Window = {
 
 declare global {
     interface Window {
+        kill: (id: number) => void;
         resetSelectedCar: () => void;
         goToCar: (id: number) => void;
         nextSelectedCar: () => void;
         activeCars: () => void;
+        increaseDifficulty: () => void;
         reset: () => void;
+        saveCurrentNetwork: () => void;
         discardNetwork: () => void;
     }
 }
@@ -252,6 +286,12 @@ declare global {
 window.resetSelectedCar = () => {
     selectedCar = null;
 }
+window.kill = (carId: number) => {
+    const carBatch = carBatches.find(cb => cb.car.id === carId);
+    if (carBatch) {
+        carBatch.car.isDamaged = true;
+    }
+};
 window.activeCars = () => {
     console.log(carBatches.filter(carBatch => !carBatch.car.isDamaged).sort((a, b) => a.car.y - b.car.y).map(carBath => ({
         id: carBath.car.id,
@@ -278,7 +318,18 @@ window.goToCar = (id: number) => {
     console.log(`[goToCar] selectedCar changed: ${prevId} -> ${selectedCar.car.id}`);
 };
 
+window.increaseDifficulty = () => {
+    trafficManager.increaseDifficulty();
+}
+
 window.reset = () => restart();
+window.saveCurrentNetwork = () => {
+    storage.save(
+        distanceTraveled,
+        bestCar.network,
+        numberOfIterations,
+    )
+}
 window.discardNetwork = () => {
     storage.discard();
     window.location.reload();
@@ -290,6 +341,11 @@ window.addEventListener('keypress', (event) => {
         isPaused = !isPaused;
         if (!isPaused) {
             requestAnimationFrame(animate);
+        }
+
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
         }
     }
 })

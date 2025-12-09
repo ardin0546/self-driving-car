@@ -33,7 +33,7 @@ export default class TrafficManager {
 
     update(canvas: HTMLCanvasElement, road: Road, playerCar: Car) {
         for (const trafficCar of this.traffic) {
-            trafficCar.update(road, this.traffic);
+            trafficCar.update(road, []);
         }
 
         if (!this.allowedToGenerateTraffic) {
@@ -50,6 +50,11 @@ export default class TrafficManager {
         }
     }
 
+    increaseDifficulty() {
+        this.spawnDistance = Math.max(200, this.spawnDistance -= 50);
+        console.log(`increased traffic difficulty, new spawn distance: ${this.spawnDistance}`);
+    }
+
     spawnNext(road: Road, canvasTop: number) {
         const a = road.getLaneCenter(Math.floor(Math.random() * road.laneCount));
         const b = road.getLaneCenter(Math.floor(Math.random() * road.laneCount));
@@ -59,7 +64,10 @@ export default class TrafficManager {
         const nextY = this.lastSpawnedCarY - this.spawnDistance;
         const y = Math.min(nextY, canvasTop);
 
+
         for (const x of xValues) {
+            // const speed = Math.random() * 2 + 3; // random speed between 2 and 5
+            // const newCar = this.#carConstructor({x, y}, speed);
             const newCar = this.#carConstructor({x, y});
             this.traffic.push(newCar);
         }
@@ -79,15 +87,17 @@ export default class TrafficManager {
     reset() {
         this.traffic = [];
         this.lastSpawnedCarY = 0;
+        this.spawnDistance = 500;
     }
 
     createInitialTraffic(road: Road, playerCar: Car) {
         this.lastSpawnedCarY = playerCar.y;
 
-        const create = (xValues: number[]) => {
+        const create = (lanes: number[]) => {
             const y = this.lastSpawnedCarY - this.spawnDistance;
 
-            for (const x of xValues) {
+            for (const lane of lanes) {
+                const x = road.getLaneCenter(lane)
                 const newCar = this.#carConstructor({x, y});
                 this.traffic.push(newCar);
             }
@@ -95,21 +105,20 @@ export default class TrafficManager {
             this.lastSpawnedCarY = y;
         }
 
-        create([road.getLaneCenter(1)])
-        create([road.getLaneCenter(0), road.getLaneCenter(2)]);
-        create([road.getLaneCenter(1), road.getLaneCenter(2)]);
-        create([road.getLaneCenter(0)]);
-        create([road.getLaneCenter(1), road.getLaneCenter(2)]);
-        create([road.getLaneCenter(0), road.getLaneCenter(1)]);
-        create([road.getLaneCenter(0), road.getLaneCenter(2)]);
-        create([road.getLaneCenter(1)]);
-        create([road.getLaneCenter(0)]);
-        create([road.getLaneCenter(1)]);
-        create([road.getLaneCenter(2)]);
+        create([1])
+        create([0, 2]);
+        create([1, 2]);
+        create([0]);
+        create([1, 2]);
+        create([0, 1]);
+        create([0, 2]);
+        create([1]);
+        create([0]);
+        create([1]);
+        create([2]);
     }
 
     #carConstructor(point: Point, speed = 4): Car {
-
         return new Car({
             x: point.x,
             y: point.y,

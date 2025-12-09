@@ -20,7 +20,7 @@ type CarOptions = {
 const DAMAGED_COLOR = "tomato";
 
 export default class Car {
-    private static nextId = 1;
+    public static nextId = 1;
 
     public id: number;
     public x: number;
@@ -137,8 +137,8 @@ export default class Car {
                 continue;
             }
             if (polysIntersect(this.polygon, trafficCar.polygon)) {
-                trafficCar.isDamaged = true;
-                trafficCar.speed = 0;
+                // trafficCar.isDamaged = true;
+                // trafficCar.speed = 0;
                 return true;
             }
         }
