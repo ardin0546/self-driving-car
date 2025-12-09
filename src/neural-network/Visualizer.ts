@@ -90,7 +90,17 @@ export default class Visualizer {
                 this.ctx.stroke();
             }
         }
-
+        // for (let i = 0; i < inputs.length; i++) {
+        //     for (let j = 0; j < outputs.length; j++) {
+        //         const contribution = weights[i][j] * inputs[i];
+        //         this.ctx.strokeStyle = getRGBA(contribution);
+        //         this.ctx.lineWidth = Math.abs(contribution) * 2;
+        //         this.ctx.beginPath();
+        //         this.ctx.moveTo(this.#getNodeX(i, inputs.length, left, right), bottom);
+        //         this.ctx.lineTo(this.#getNodeX(j, outputs.length, left, right), top);
+        //         this.ctx.stroke();
+        //     }
+        // }
         const nodeRadius = 18;
 
         for (let i = 0; i < level.inputs.length; i++) {

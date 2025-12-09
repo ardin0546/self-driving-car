@@ -4,12 +4,17 @@ import {getAppElement} from "../helpers.ts";
 
 const FPS_ID = 'fps';
 
+const CAR_ID = 'car-id';
+const CAR_HIGHEST_DISTANCE = 'car-highest-distance';
 const CAR_DISTANCE = 'car-distance';
+const NEXT_DISTANCE_CHECKPOINT = 'next-distance-checkpoint';
 const CAR_SPEED_ID = 'car-speed';
 const CARS_ALIVE_ID = 'cars-alive';
 const CAR_ANGLE_ID = 'car-angle';
 const CAR_DAMAGED = 'car-damaged';
 const CAR_POSITION_ID = 'car-position';
+
+const ITERATIONS = 'iterations';
 
 const CAR_CONTROL_TOP_ID = 'car-control-top';
 const CAR_CONTROL_LEFT_ID = 'car-control-left';
@@ -68,9 +73,32 @@ export class Debug {
 
         this.#appendTableRow(
             tableElement,
+            'ID:',
+            CAR_ID
+        )
+
+        this.#appendTableRow(
+            tableElement,
+            'Highest Distance:',
+            CAR_HIGHEST_DISTANCE
+        )
+        this.#appendTableRow(
+            tableElement,
             'Distance:',
             CAR_DISTANCE
         )
+        this.#appendTableRow(
+            tableElement,
+            'Next check:',
+            NEXT_DISTANCE_CHECKPOINT
+        )
+        this.#appendTableRow(
+            tableElement,
+            'Iterations:',
+            ITERATIONS
+        )
+
+
         this.#appendTableRow(
             tableElement,
             'Car Speed:',
@@ -137,11 +165,18 @@ export class Debug {
         car: Car,
         cars: Car[],
         fpsCounter: FPSCounter,
-        distanceTravaled: number
+        highestDistance: number,
+        nextDistanceCheckpoint: number,
+        distanceTraveled: number,
+        iterations: number,
     ) {
         this.#updateValue(FPS_ID, fpsCounter.getFps());
 
-        this.#updateValue(CAR_DISTANCE, String(Math.round(distanceTravaled)));
+        this.#updateValue(CAR_ID, '' + car.id);
+        this.#updateValue(CAR_HIGHEST_DISTANCE, String(Math.round(highestDistance)));
+        this.#updateValue(CAR_DISTANCE, String(Math.round(distanceTraveled)));
+        this.#updateValue(NEXT_DISTANCE_CHECKPOINT, String(Math.round(nextDistanceCheckpoint)));
+        this.#updateValue(ITERATIONS, String(iterations));
         this.#updateValue(CAR_SPEED_ID, car.speed.toFixed(2));
         this.#updateValue(CARS_ALIVE_ID, cars.filter(c => !c.isDamaged).length.toString());
         this.#updateValue(CAR_ANGLE_ID, car.angle.toFixed(2));

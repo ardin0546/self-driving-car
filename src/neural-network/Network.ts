@@ -13,9 +13,16 @@ export class Network {
         }
     }
 
+    static fromJSON(data: any): Network {
+        const net = new Network([]); // no need to pass neurons
+        net.levels = data.levels.map((l: any) => Level.fromJSON(l));
+        return net;
+    }
+
     static mutate(network: Network, amount = 1) {
         for (const level of network.levels) {
             for (let i = 0; i < level.biases.length; i++) {
+                // level.biases[i] += (Math.random() * 2 - 1) * amount;
                 level.biases[i] = lerp(
                     level.biases[i],
                     Math.random() * 2 - 1,
@@ -24,6 +31,7 @@ export class Network {
             }
             for (let i = 0; i < level.weights.length; i++) {
                 for (let j = 0; j < level.weights[i].length; j++) {
+                    // level.weights[i][j] += (Math.random() * 2 - 1) * amount;
                     level.weights[i][j] = lerp(
                         level.weights[i][j],
                         Math.random() * 2 - 1,
